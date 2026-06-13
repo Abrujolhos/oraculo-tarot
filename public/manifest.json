@@ -1,0 +1,14 @@
+{
+  "short_name": "Oráculo",
+  "name": "Oráculo — Tarot com IA",
+  "description": "O teu baralho de tarot, sempre contigo. Leituras personalizadas por IA.",
+  "icons": [
+    { "src": "icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },
+    { "src": "icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#100c1c",
+  "background_color": "#100c1c",
+  "orientation": "portrait"
+}
