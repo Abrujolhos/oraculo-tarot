@@ -1,24 +1,23 @@
-const CACHE = "oraculo-v1";
-const STATIC = ["/", "/index.html", "/manifest.json"];
+// v3 — cache mínimo, sempre rede primeiro. Resolve versões presas em cache.
+const CACHE = "oraculo-v3";
 
-self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(STATIC)));
-  self.skipWaiting();
+self.addEventListener("install", () => {
+  self.skipWaiting(); // ativa imediatamente a nova versão
 });
 
 self.addEventListener("activate", (e) => {
-  e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))));
-  self.clients.claim();
+  e.waitUntil(
+    caches.keys().then((ks) => Promise.all(ks.map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener("fetch", (e) => {
+  // Network-first sempre. Nunca servir HTML/API de cache.
+  // Só usa cache como último recurso se a rede falhar (offline real).
   if (e.request.method !== "GET") return;
-  if (e.request.url.includes("supabase.co")) return; // nunca cache de API
+  if (e.request.url.includes("supabase.co")) return; // API nunca passa pelo SW
   e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request).then((res) => {
-      const clone = res.clone();
-      caches.open(CACHE).then((c) => c.put(e.request, clone));
-      return res;
-    }))
+    fetch(e.request).catch(() => caches.match(e.request))
   );
 });
