@@ -1,9 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient";
 
 /* ─────────── CONFIG ─────────── */
-
-const SUPA_URL = process.env.REACT_APP_SUPABASE_URL;
 
 // Links de pagamento Stripe — preencher no .env ou variáveis Vercel
 const STRIPE_LINK_MENSAL = process.env.REACT_APP_STRIPE_MENSAL || "https://buy.stripe.com/SUBSTITUIR_MENSAL";
@@ -389,11 +387,10 @@ async function authSessaoAtual() {
 }
 
 const dbGet = async (token, path) => {
-  // usado internamente; preferir supabase.from() nas funções novas
-  const r = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: {
       "Content-Type": "application/json",
-      apikey: process.env.REACT_APP_SUPABASE_ANON_KEY,
+      apikey: SUPABASE_ANON_KEY,
       Authorization: `Bearer ${token}`,
     }
   });
