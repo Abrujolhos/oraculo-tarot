@@ -1,5 +1,6 @@
 {
   "buildCommand": "CI=false DISABLE_ESLINT_PLUGIN=true react-scripts build",
   "outputDirectory": "build",
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
+  "rewrites": [{ "source": "/(.*)", "destination": "/" }],
+  "alias": ["oraculo.kairosholdings.xyz"]
 }
