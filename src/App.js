@@ -399,42 +399,55 @@ const dbGet = async (token, path) => {
 };
 
 async function dbCriarLeitura(token, leitura) {
-  const { data, error } = await supabase.from("leituras").insert(leitura).select().single();
-  if (error) throw new Error(error.message);
-  return data;
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/leituras`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, Prefer: "return=representation" },
+    body: JSON.stringify(leitura),
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.message || "Erro a criar leitura");
+  return Array.isArray(d) ? d[0] : d;
 }
 
 async function dbAtualizarLeitura(token, id, campos) {
-  const { error } = await supabase.from("leituras").update(campos).eq("id", id);
-  if (error) throw new Error(error.message);
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/leituras?id=eq.${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
+    body: JSON.stringify(campos),
+  });
+  if (!r.ok) throw new Error("Erro a atualizar leitura");
 }
 
 async function dbApagarLeitura(token, id) {
-  const { error } = await supabase.from("leituras").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/leituras?id=eq.${id}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
+  });
+  if (!r.ok) throw new Error("Erro a apagar leitura");
 }
 
 async function dbGuardarAnalise(token, userId, mes, texto) {
-  await supabase.from("analises_mensais").upsert({ user_id: userId, mes, texto });
+  await fetch(`${SUPABASE_URL}/rest/v1/analises_mensais`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify({ user_id: userId, mes, texto }),
+  });
 }
 
 async function chamarIA(token, messages, tipo, idioma) {
-  const { data, error } = await supabase.functions.invoke("interpretar", {
-    body: { messages, tipo, idioma },
+  const r = await fetch(`${SUPABASE_URL}/functions/v1/interpretar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ messages, tipo, idioma }),
   });
-  if (error) {
-    const e = new Error(error.message || "Erro");
-    e.codigo = error.context?.codigo;
-    e.proxima = error.context?.proxima;
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || d.error) {
+    const e = new Error(d.error || "Erro na interpretação");
+    e.codigo = d.codigo;
+    e.proxima = d.proxima;
     throw e;
   }
-  if (data?.error) {
-    const e = new Error(data.error);
-    e.codigo = data.codigo;
-    e.proxima = data.proxima;
-    throw e;
-  }
-  return data.texto;
+  return d.texto;
 }
 
 function emBlocos(texto) {
@@ -449,13 +462,19 @@ function dataPt(iso, L) {
 }
 
 async function dbAtualizarPerfil(token, campos) {
-  const { error } = await supabase.from("profiles").update(campos.dados).eq("id", campos.id);
-  if (error) throw new Error(error.message || "Erro a guardar perfil");
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${campos.id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
+    body: JSON.stringify(campos.dados),
+  });
+  if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.message || "Erro a guardar perfil"); }
 }
 
 async function dbGuardarConsentimento(token, userId, finalidade, concedido) {
-  await supabase.from("consentimentos").upsert({
-    user_id: userId, finalidade, concedido, atualizado_em: new Date().toISOString()
+  await fetch(`${SUPABASE_URL}/rest/v1/consentimentos`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify({ user_id: userId, finalidade, concedido, atualizado_em: new Date().toISOString() }),
   });
 }
 
