@@ -68,7 +68,9 @@ const PT = {
   perfilSub: "Tudo opcional. Quanto mais partilhares, mais pessoal fica a tua leitura.",
   perfilNome: "Nome",
   perfilNasc: "Data de nascimento",
+  perfilNascPH: "DD/MM/AAAA",
   perfilHora: "Hora de nascimento",
+  perfilHoraPH: "HH:MM (ex. 14:30)",
   perfilHoraAjuda: "Para o ascendente e a lua nas leituras",
   perfilLocal: "Local de nascimento",
   perfilLocalPH: "Cidade, país",
@@ -269,7 +271,9 @@ const EN = {
   perfilSub: "All optional. The more you share, the more personal your reading becomes.",
   perfilNome: "Name",
   perfilNasc: "Date of birth",
+  perfilNascPH: "DD/MM/YYYY",
   perfilHora: "Time of birth",
+  perfilHoraPH: "HH:MM (e.g. 14:30)",
   perfilHoraAjuda: "For the ascendant and moon in your readings",
   perfilLocal: "Place of birth",
   perfilLocalPH: "City, country",
@@ -496,6 +500,35 @@ function signoDe(dataISO) {
     if (mes < s.ate[0] || (mes === s.ate[0] && dia <= s.ate[1])) return s.nome;
   }
   return "Capricórnio";
+}
+
+// Converte "DD/MM/AAAA" (ou "DD-MM-AAAA", "DDMMAAAA") em ISO "AAAA-MM-DD"
+function dataParaISO(txt) {
+  if (!txt) return "";
+  const limpo = txt.replace(/[^0-9]/g, "");
+  if (limpo.length !== 8) return "";
+  const dia = limpo.slice(0, 2), mes = limpo.slice(2, 4), ano = limpo.slice(4, 8);
+  const d = parseInt(dia, 10), m = parseInt(mes, 10);
+  if (d < 1 || d > 31 || m < 1 || m > 12) return "";
+  return `${ano}-${mes}-${dia}`;
+}
+
+// Converte ISO "AAAA-MM-DD" de volta para "DD/MM/AAAA" (para mostrar)
+function isoParaData(iso) {
+  if (!iso) return "";
+  const p = iso.split("-");
+  if (p.length !== 3) return "";
+  return `${p[2]}/${p[1]}/${p[0]}`;
+}
+
+// Normaliza hora escrita "HHMM" ou "HH:MM" -> "HH:MM"
+function horaNormalizar(txt) {
+  if (!txt) return "";
+  const limpo = txt.replace(/[^0-9]/g, "");
+  if (limpo.length < 3) return "";
+  const h = limpo.slice(0, 2), min = limpo.slice(2, 4).padEnd(2, "0");
+  if (parseInt(h, 10) > 23 || parseInt(min, 10) > 59) return "";
+  return `${h}:${min}`;
 }
 
 /* ─────────── VISUAIS ─────────── */
@@ -814,9 +847,11 @@ function ItemHistorico({ leitura, onAtualizar, onApagar, L }) {
 
 function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMarketing, onConsent }) {
   const [nome, setNome] = useState(perfil?.nome || "");
-  const [nasc, setNasc] = useState(perfil?.data_nascimento || "");
-  const [hora, setHora] = useState(perfil?.hora_nascimento || "");
+  const [nascTxt, setNascTxt] = useState(isoParaData(perfil?.data_nascimento) || "");
+  const [horaTxt, setHoraTxt] = useState(perfil?.hora_nascimento ? perfil.hora_nascimento.slice(0,5) : "");
   const [local, setLocal] = useState(perfil?.local_nascimento || "");
+  const nasc = dataParaISO(nascTxt);   // ISO derivado do texto
+  const hora = horaNormalizar(horaTxt); // HH:MM derivado do texto
   const [genero, setGenero] = useState(perfil?.genero || "");
   const [profissao, setProfissao] = useState(perfil?.profissao || "");
   const [marketing, setMarketing] = useState(!!consentMarketing);
@@ -867,14 +902,30 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
 
       <div className="campo-grupo">
         <label className="rotulo">{L.perfilNasc}</label>
-        <input className="campo" type="date" value={nasc} onChange={(e) => setNasc(e.target.value)} />
+        <input
+          className="campo"
+          type="text"
+          inputMode="numeric"
+          placeholder={L.perfilNascPH}
+          value={nascTxt}
+          onChange={(e) => setNascTxt(e.target.value)}
+          maxLength={10}
+        />
         {signoMostra && <span className="signo-chip">☉ {signoMostra}</span>}
       </div>
 
       <div className="dois-campos">
         <div className="campo-grupo">
           <label className="rotulo">{L.perfilHora}</label>
-          <input className="campo" type="time" value={hora} onChange={(e) => setHora(e.target.value)} />
+          <input
+            className="campo"
+            type="text"
+            inputMode="numeric"
+            placeholder={L.perfilHoraPH}
+            value={horaTxt}
+            onChange={(e) => setHoraTxt(e.target.value)}
+            maxLength={5}
+          />
           <span className="campo-ajuda">{L.perfilHoraAjuda}</span>
         </div>
         <div className="campo-grupo">
