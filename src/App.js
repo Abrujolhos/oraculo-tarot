@@ -84,6 +84,8 @@ const PT = {
   consentTxt: "Aceito receber, ocasionalmente, novidades e ofertas de outros serviços Kairos. Podes retirar este consentimento a qualquer momento. Os teus dados de leitura nunca são partilhados sem esta autorização.",
   perfilGuardar: "Guardar perfil",
   perfilGuardado: "✓ Perfil guardado",
+  erroIdade: "Tens de ter pelo menos 18 anos para usar o Oráculo.",
+  erroRate: "Demasiados pedidos seguidos. Aguarda um momento e tenta de novo.",
   privTit: "Privacidade",
   privTxt: "Os teus dados servem para personalizar as tuas leituras. Não são usados para mais nada sem a tua autorização explícita.",
   soPro: "Exclusivo Pro",
@@ -147,6 +149,8 @@ Sê específico ao que os dados mostram; nunca genérico.`,
 
 const BR = {
   ...PT,
+  erroIdade: "Você precisa ter pelo menos 18 anos para usar o Oráculo.",
+  erroRate: "Muitos pedidos seguidos. Aguarde um momento e tente de novo.",
   sub: "Seu baralho, sempre com você",
   bemVindo: "Bem-vindo de volta", criaConta: "Crie sua conta",
   authSub: "Suas leituras, só suas, em segurança.",
@@ -287,6 +291,8 @@ const EN = {
   consentTxt: "I agree to occasionally receive news and offers from other Kairos services. You can withdraw this consent at any time. Your reading data is never shared without this authorization.",
   perfilGuardar: "Save profile",
   perfilGuardado: "✓ Profile saved",
+  erroIdade: "You must be at least 18 to use Oráculo.",
+  erroRate: "Too many requests in a row. Please wait a moment and try again.",
   privTit: "Privacy",
   privTxt: "Your data is used to personalize your readings. It is not used for anything else without your explicit consent.",
   signos: { "Capricórnio": "Capricorn", "Aquário": "Aquarius", "Peixes": "Pisces", "Carneiro": "Aries", "Touro": "Taurus", "Gémeos": "Gemini", "Caranguejo": "Cancer", "Leão": "Leo", "Virgem": "Virgo", "Balança": "Libra", "Escorpião": "Scorpio", "Sagitário": "Sagittarius" },
@@ -492,6 +498,17 @@ const SIGNOS = [
   { nome: "Escorpião", ate: [11, 21] }, { nome: "Sagitário", ate: [12, 21] },
   { nome: "Capricórnio", ate: [12, 31] },
 ];
+function idadeAnos(dataISO) {
+  if (!dataISO) return null;
+  const nasc = new Date(dataISO + "T00:00:00");
+  if (isNaN(nasc.getTime())) return null;
+  const hoje = new Date();
+  let idade = hoje.getFullYear() - nasc.getFullYear();
+  const m = hoje.getMonth() - nasc.getMonth();
+  if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
+  return idade;
+}
+
 function signoDe(dataISO) {
   if (!dataISO) return "";
   const d = new Date(dataISO + "T12:00:00");
@@ -857,11 +874,19 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
   const [marketing, setMarketing] = useState(!!consentMarketing);
   const [ocupado, setOcupado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+  const [erroIdade, setErroIdade] = useState("");
 
   const signoPt = signoDe(nasc);
   const signoMostra = idioma === "en" && L.signos?.[signoPt] ? L.signos[signoPt] : signoPt;
 
   async function guardar() {
+    // Verificação de idade mínima (18 anos) — só quando há data preenchida
+    const idade = idadeAnos(nasc);
+    if (nasc && idade !== null && idade < 18) {
+      setErroIdade(L.erroIdade);
+      return;
+    }
+    setErroIdade("");
     setOcupado(true);
     try {
       await dbAtualizarPerfil(sessao.token, {
@@ -961,6 +986,8 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
           <span className="consent-txt">{L.consentTxt}</span>
         </span>
       </button>
+
+      {erroIdade && <p className="erro-idade">{erroIdade}</p>}
 
       <button className="cta" onClick={guardar} disabled={ocupado}>
         {guardado ? L.perfilGuardado : ocupado ? L.aGuardar : L.perfilGuardar}
@@ -1256,6 +1283,8 @@ ${L.pInstr}`;
       if (e.codigo === "limite_semanal") {
         setProximaLeitura(e.proxima ? new Date(e.proxima) : null);
         setErro(`${L.limiteTxt} ${e.proxima ? dataPt(e.proxima, L) : ""}`);
+      } else if (e.codigo === "rate_limit") {
+        setErro(L.erroRate);
       } else {
         setErro(e.message || L.erroInterp);
       }
@@ -2069,6 +2098,7 @@ const css = `
   text-align: center; color: #8d83a5; font-size: 11.5px; line-height: 1.5;
   border-top: 1px solid rgba(201,163,92,.18); padding-top: 12px; margin-top: 2px;
 }
+.erro-idade { color: #e8a0a0; font-size: 13px; text-align: center; margin-top: 4px; }
 .rodape {
   position: relative; z-index: 1; max-width: 560px; margin: 40px auto 0;
   text-align: center; color: #58506e; font-size: 11px; line-height: 1.6;
