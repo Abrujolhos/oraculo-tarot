@@ -1084,13 +1084,19 @@ export default function TarotApp() {
     let cancelado = false;
     (async () => {
       try {
-        let dados = await dbGet(sessao.token, `significados_cartas?idioma=eq.${idioma}&select=card_id,direito,invertido`);
+        const cols = "card_id,palavras_direito,palavras_invertido,texto_direito,texto_invertido,direito,invertido";
+        let dados = await dbGet(sessao.token, `significados_cartas?idioma=eq.${idioma}&select=${cols}`);
         if ((!dados || !dados.length) && idioma !== "pt-PT") {
-          dados = await dbGet(sessao.token, `significados_cartas?idioma=eq.pt-PT&select=card_id,direito,invertido`);
+          dados = await dbGet(sessao.token, `significados_cartas?idioma=eq.pt-PT&select=${cols}`);
         }
         if (cancelado) return;
         const mapa = {};
-        (dados || []).forEach((d) => { mapa[d.card_id] = { direito: d.direito, invertido: d.invertido }; });
+        (dados || []).forEach((d) => { mapa[d.card_id] = {
+          palavrasD: d.palavras_direito || d.direito,
+          palavrasI: d.palavras_invertido || d.invertido,
+          textoD: d.texto_direito || "",
+          textoI: d.texto_invertido || "",
+        }; });
         setSignificados(mapa);
       } catch { /* sem significados fixos; a IA continua a funcionar */ }
     })();
@@ -1251,14 +1257,18 @@ export default function TarotApp() {
   function sigDe(carta) {
     const s = significados[carta.id];
     if (!s) return null;
-    return carta.invertida ? s.invertido : s.direito;
+    return {
+      palavras: carta.invertida ? s.palavrasI : s.palavrasD,
+      texto: carta.invertida ? s.textoI : s.textoD,
+    };
   }
 
   function promptLeitura() {
     const lista = cartas
       .map((c, i) => {
         const sig = sigDe(c);
-        return `${i + 1}. ${tiragem.pos[i]}: ${c.nome}${c.invertida ? " (⟲)" : ""}${sig ? ` [significado base: ${sig}]` : ""}`;
+        const base = sig ? ` [significado base: ${sig.palavras}${sig.texto ? " — " + sig.texto : ""}]` : "";
+        return `${i + 1}. ${tiragem.pos[i]}: ${c.nome}${c.invertida ? " (⟲)" : ""}${base}`;
       })
       .join("\n");
     return `${L.pCtx}
@@ -1541,7 +1551,10 @@ ${L.pInstr}`;
                       {tiragem.pos[i].split(" — ")[0]}
                     </div>
                     {reveladas[i] && sigDe(c) && (
-                      <p className="posto-sig">{sigDe(c)}</p>
+                      <div className="posto-sig">
+                        <p className="posto-sig-palavras">{sigDe(c).palavras}</p>
+                        {sigDe(c).texto && <p className="posto-sig-texto">{sigDe(c).texto}</p>}
+                      </div>
                     )}
                   </div>
                 ))}
@@ -2082,9 +2095,17 @@ const css = `
 .barra-n { font-size: 13px; color: #c9a35c; text-align: right; font-family: 'Cormorant Garamond', serif; font-weight: 600; }
 
 .posto-sig {
-  max-width: 130px; font-size: 11.5px; line-height: 1.4; color: #b8aecb;
-  text-align: center; font-style: italic; font-family: 'Cormorant Garamond', serif;
-  margin-top: 2px; animation: surgir .5s ease both;
+  max-width: 240px; margin: 6px auto 0; text-align: center;
+  animation: surgir .5s ease both;
+}
+.posto-sig-palavras {
+  font-size: 12.5px; line-height: 1.4; color: #c9a35c;
+  font-family: 'Cormorant Garamond', serif; font-weight: 600;
+  letter-spacing: .3px; margin-bottom: 5px;
+}
+.posto-sig-texto {
+  font-size: 12px; line-height: 1.55; color: #b0a6c4;
+  font-family: 'Cormorant Garamond', serif; font-style: italic;
 }
 .video-oferta {
   width: 100%; background: rgba(98,72,168,.14); border: 1px solid rgba(141,131,165,.35);
