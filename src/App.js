@@ -113,7 +113,7 @@ const PT = {
     { id: "dia", nome: "Carta do Dia", desc: "Uma carta para iluminar o teu dia.", pos: ["A tua carta"] },
     { id: "tres", nome: "Três Cartas", desc: "Passado, presente e futuro da questão.", pos: ["Passado", "Presente", "Futuro"] },
     { id: "celta", nome: "Cruz Celta", desc: "A leitura clássica e profunda, em dez posições.",
-      pos: ["O Presente — a situação atual","O Desafio — o que cruza o caminho","A Raiz — a base da questão","O Passado — o que fica para trás","A Coroa — objetivo e potencial","O Futuro Próximo","Tu — a tua atitude","O Ambiente — influências externas","Esperanças e Medos","O Resultado"] },
+      pos: ["Situação atual — o presente","O desafio — o que te bloqueia","A base — a raiz da questão","O passado recente","O que podes alcançar — potencial","O futuro próximo","A tua atitude — como te posicionas","Quem te rodeia — influências externas","Esperanças e medos","O resultado provável"] },
   ],
   arcanos: ["O Louco","O Mago","A Sacerdotisa","A Imperatriz","O Imperador","O Hierofante","Os Amantes","O Carro","A Força","O Eremita","A Roda da Fortuna","A Justiça","O Enforcado","A Morte","A Temperança","O Diabo","A Torre","A Estrela","A Lua","O Sol","O Julgamento","O Mundo"],
   naipes: [
@@ -321,7 +321,7 @@ const EN = {
     { id: "dia", nome: "Card of the Day", desc: "One card to light your day.", pos: ["Your card"] },
     { id: "tres", nome: "Three Cards", desc: "Past, present and future of the matter.", pos: ["Past", "Present", "Future"] },
     { id: "celta", nome: "Celtic Cross", desc: "The classic, deep ten-position reading.",
-      pos: ["The Present — current situation","The Challenge — what crosses your path","The Root — foundation of the matter","The Past — what is left behind","The Crown — goal and potential","The Near Future","You — your attitude","The Environment — external influences","Hopes and Fears","The Outcome"] },
+      pos: ["Current situation — the present","The challenge — what blocks you","The foundation — root of the matter","The recent past","What you can reach — potential","The near future","Your attitude — how you stand","Those around you — external influences","Hopes and fears","The likely outcome"] },
   ],
   arcanos: ["The Fool","The Magician","The High Priestess","The Empress","The Emperor","The Hierophant","The Lovers","The Chariot","Strength","The Hermit","Wheel of Fortune","Justice","The Hanged Man","Death","Temperance","The Devil","The Tower","The Star","The Moon","The Sun","Judgement","The World"],
   naipes: [
