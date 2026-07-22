@@ -86,6 +86,17 @@ const PT = {
   perfilGuardado: "✓ Perfil guardado",
   erroIdade: "Tens de ter pelo menos 18 anos para usar o Oráculo.",
   erroRate: "Demasiados pedidos seguidos. Aguarda um momento e tenta de novo.",
+  privTitulo: "Privacidade e dados",
+  privCodigoBtn: "Gerar código de suporte (24h)",
+  privCodigoTxt: "As tuas leituras são privadas. Se pedires ajuda ao suporte, dá-lhes este código — só com ele podem ver o teu histórico, e apenas durante 24 horas.",
+  privCodigoGerado: "Código válido por 24h:",
+  privApagarHist: "Apagar todo o histórico",
+  privApagarHistConf: "Apagar TODAS as tuas leituras e análises? Esta ação não pode ser desfeita.",
+  privApagarHistOk: "Histórico apagado.",
+  privApagarConta: "Apagar a minha conta",
+  privApagarContaConf: "Apagar a tua conta e TODOS os teus dados de forma permanente? Escreve APAGAR para confirmar.",
+  privApagarContaOk: "Conta apagada. Até sempre.",
+  privErro: "Algo falhou. Tenta de novo.",
   privTit: "Privacidade",
   privTxt: "Os teus dados servem para personalizar as tuas leituras. Não são usados para mais nada sem a tua autorização explícita.",
   soPro: "Exclusivo Pro",
@@ -151,6 +162,17 @@ const BR = {
   ...PT,
   erroIdade: "Você precisa ter pelo menos 18 anos para usar o Oráculo.",
   erroRate: "Muitos pedidos seguidos. Aguarde um momento e tente de novo.",
+  privTitulo: "Privacidade e dados",
+  privCodigoBtn: "Gerar código de suporte (24h)",
+  privCodigoTxt: "Suas leituras são privadas. Se pedir ajuda ao suporte, informe este código — só com ele podem ver seu histórico, e apenas por 24 horas.",
+  privCodigoGerado: "Código válido por 24h:",
+  privApagarHist: "Apagar todo o histórico",
+  privApagarHistConf: "Apagar TODAS as suas leituras e análises? Esta ação não pode ser desfeita.",
+  privApagarHistOk: "Histórico apagado.",
+  privApagarConta: "Apagar minha conta",
+  privApagarContaConf: "Apagar sua conta e TODOS os seus dados de forma permanente? Digite APAGAR para confirmar.",
+  privApagarContaOk: "Conta apagada. Até sempre.",
+  privErro: "Algo falhou. Tente de novo.",
   sub: "Seu baralho, sempre com você",
   bemVindo: "Bem-vindo de volta", criaConta: "Crie sua conta",
   authSub: "Suas leituras, só suas, em segurança.",
@@ -293,6 +315,17 @@ const EN = {
   perfilGuardado: "✓ Profile saved",
   erroIdade: "You must be at least 18 to use Oráculo.",
   erroRate: "Too many requests in a row. Please wait a moment and try again.",
+  privTitulo: "Privacy & data",
+  privCodigoBtn: "Generate support code (24h)",
+  privCodigoTxt: "Your readings are private. If you ask support for help, give them this code — only with it can they see your history, and only for 24 hours.",
+  privCodigoGerado: "Code valid for 24h:",
+  privApagarHist: "Delete all history",
+  privApagarHistConf: "Delete ALL your readings and analyses? This cannot be undone.",
+  privApagarHistOk: "History deleted.",
+  privApagarConta: "Delete my account",
+  privApagarContaConf: "Permanently delete your account and ALL your data? Type APAGAR to confirm.",
+  privApagarContaOk: "Account deleted. Farewell.",
+  privErro: "Something failed. Please try again.",
   privTit: "Privacy",
   privTxt: "Your data is used to personalize your readings. It is not used for anything else without your explicit consent.",
   signos: { "Capricórnio": "Capricorn", "Aquário": "Aquarius", "Peixes": "Pisces", "Carneiro": "Aries", "Touro": "Taurus", "Gémeos": "Gemini", "Caranguejo": "Cancer", "Leão": "Leo", "Virgem": "Virgo", "Balança": "Libra", "Escorpião": "Scorpio", "Sagitário": "Sagittarius" },
@@ -862,7 +895,7 @@ function ItemHistorico({ leitura, onAtualizar, onApagar, L }) {
 
 /* ─────────── PERFIL ─────────── */
 
-function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMarketing, onConsent }) {
+function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMarketing, onConsent, onSair }) {
   const [nome, setNome] = useState(perfil?.nome || "");
   const [nascTxt, setNascTxt] = useState(isoParaData(perfil?.data_nascimento) || "");
   const [horaTxt, setHoraTxt] = useState(perfil?.hora_nascimento ? perfil.hora_nascimento.slice(0,5) : "");
@@ -875,6 +908,53 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
   const [ocupado, setOcupado] = useState(false);
   const [guardado, setGuardado] = useState(false);
   const [erroIdade, setErroIdade] = useState("");
+  const [codigoSuporte, setCodigoSuporte] = useState("");
+  const [privMsg, setPrivMsg] = useState("");
+  const [privOcupado, setPrivOcupado] = useState(false);
+
+  async function gerarCodigo() {
+    setPrivOcupado(true); setPrivMsg("");
+    try {
+      const cod = Array.from(crypto.getRandomValues(new Uint8Array(4))).map((b) => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+      const expira = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/codigos_suporte`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessao.token}` },
+        body: JSON.stringify({ user_id: sessao.user.id, codigo: cod, expira_em: expira }),
+      });
+      if (!r.ok) throw new Error("db");
+      setCodigoSuporte(cod);
+    } catch (e) { setPrivMsg(L.privErro); }
+    setPrivOcupado(false);
+  }
+
+  async function apagarHistorico() {
+    if (!window.confirm(L.privApagarHistConf)) return;
+    setPrivOcupado(true); setPrivMsg("");
+    try {
+      const H = { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessao.token}` };
+      await fetch(`${SUPABASE_URL}/rest/v1/leituras?user_id=eq.${sessao.user.id}`, { method: "DELETE", headers: H });
+      await fetch(`${SUPABASE_URL}/rest/v1/analises_mensais?user_id=eq.${sessao.user.id}`, { method: "DELETE", headers: H });
+      setPrivMsg(L.privApagarHistOk);
+    } catch (e) { setPrivMsg(L.privErro); }
+    setPrivOcupado(false);
+  }
+
+  async function apagarConta() {
+    const conf = window.prompt(L.privApagarContaConf);
+    if (conf !== "APAGAR") return;
+    setPrivOcupado(true); setPrivMsg("");
+    try {
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/apagar-conta`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessao.token}` },
+        body: JSON.stringify({ confirmar: "APAGAR" }),
+      });
+      if (!r.ok) throw new Error("fn");
+      window.alert(L.privApagarContaOk);
+      onSair();
+    } catch (e) { setPrivMsg(L.privErro); setPrivOcupado(false); }
+  }
 
   const signoPt = signoDe(nasc);
   const signoMostra = idioma === "en" && L.signos?.[signoPt] ? L.signos[signoPt] : signoPt;
@@ -992,6 +1072,21 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
       <button className="cta" onClick={guardar} disabled={ocupado}>
         {guardado ? L.perfilGuardado : ocupado ? L.aGuardar : L.perfilGuardar}
       </button>
+
+      <div className="priv-zona">
+        <h3 className="priv-titulo">{L.privTitulo}</h3>
+        <p className="priv-txt">{L.privCodigoTxt}</p>
+        <button className="priv-btn" onClick={gerarCodigo} disabled={privOcupado}>{L.privCodigoBtn}</button>
+        {codigoSuporte && (
+          <p className="priv-codigo">{L.privCodigoGerado} <b>{codigoSuporte}</b></p>
+        )}
+        <button className="priv-btn" onClick={apagarHistorico} disabled={privOcupado}>{L.privApagarHist}</button>
+        <button className="priv-btn priv-perigo" onClick={apagarConta} disabled={privOcupado}>{L.privApagarConta}</button>
+        {privMsg && <p className="priv-msg">{privMsg}</p>}
+        <a className="priv-link" href="/privacidade.html" target="_blank" rel="noreferrer">
+          {idioma === "en" ? "Privacy Policy" : "Política de Privacidade"}
+        </a>
+      </div>
     </main>
   );
 }
@@ -1447,6 +1542,7 @@ ${L.pInstr}`;
           {vista === "perfil" && (
             <EcraPerfil
               L={L} idioma={idioma} sessao={sessao} perfil={perfil}
+              onSair={sair}
               consentMarketing={consentMarketing}
               onConsent={setConsentMarketing}
               onPerfilAtualizado={(campos) => setPerfil((p) => ({ ...(p || {}), ...campos }))}
@@ -2131,6 +2227,20 @@ const css = `
 .dois-campos .campo-grupo { flex: 1; margin-top: 14px; }
 .campo-ajuda { display: block; color: #8d83a5; font-size: 11.5px; margin-top: 4px; font-style: italic; }
 select.campo { cursor: pointer; }
+.priv-zona { margin-top: 34px; padding-top: 22px; border-top: 1px solid rgba(150,130,200,.18); }
+.priv-titulo { font-family: 'Cormorant Garamond', serif; font-size: 21px; color: #cdbdf0; margin-bottom: 8px; font-weight: 600; }
+.priv-txt { font-size: 13px; line-height: 1.55; color: #948aae; margin-bottom: 14px; }
+.priv-btn { display: block; width: 100%; margin-bottom: 9px; background: rgba(30,22,54,.55);
+  border: 1px solid rgba(150,130,200,.25); border-radius: 11px; padding: 12px 16px; color: #b8aecb;
+  font-family: inherit; font-size: 14px; cursor: pointer; transition: .2s; }
+.priv-btn:hover:not(:disabled) { border-color: rgba(201,163,92,.5); color: #e9e3f2; }
+.priv-btn:disabled { opacity: .5; cursor: default; }
+.priv-perigo { border-color: rgba(201,122,122,.35); color: #c97a7a; }
+.priv-perigo:hover:not(:disabled) { border-color: #c97a7a; color: #e08b8b; }
+.priv-codigo { font-size: 14px; color: #c9a35c; text-align: center; margin: 4px 0 12px; letter-spacing: 1px; }
+.priv-codigo b { font-size: 19px; font-family: 'Cormorant Garamond', serif; letter-spacing: 3px; }
+.priv-link { display:block; text-align:center; margin-top:14px; font-size:13px; color:#948aae; text-decoration:underline; }
+.priv-msg { font-size: 13px; color: #7bb37e; text-align: center; margin-top: 8px; }
 .signo-chip {
   display: inline-block; margin-top: 8px; background: rgba(201,163,92,.15);
   border: 1px solid rgba(201,163,92,.4); color: #e8c87e; border-radius: 999px;
