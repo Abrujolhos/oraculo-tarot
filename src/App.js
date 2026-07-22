@@ -86,6 +86,24 @@ const PT = {
   perfilGuardado: "✓ Perfil guardado",
   erroIdade: "Tens de ter pelo menos 18 anos para usar o Oráculo.",
   erroRate: "Demasiados pedidos seguidos. Aguarda um momento e tenta de novo.",
+  statDias: "dias com leituras",
+  statMedia: "cartas por leitura",
+  statMaiores: "Arcanos Maiores",
+  statNaipes: "Equilíbrio dos naipes",
+  statElemento: "Elemento dominante",
+  elFogo: "Fogo · ação e paixão",
+  elTerra: "Terra · matéria e trabalho",
+  elAr: "Ar · mente e comunicação",
+  elAgua: "Água · emoções e relações",
+  obTitulo1: "Bem-vindo ao Oráculo",
+  obTexto1: "Um espaço de reflexão através do tarot. Escolhes uma tiragem, reveles as cartas, e recebes uma leitura pensada para ti.",
+  obTitulo2: "Como funciona uma tiragem",
+  obTexto2: "Escolhe o tema (amor, carreira, decisão…) e o tipo de tiragem. Toca em cada carta para a revelar — vês logo o significado. No fim, o Oráculo tece tudo numa leitura completa.",
+  obTitulo3: "Torna-a tua",
+  obTexto3: "Preenche o perfil com a tua data e hora de nascimento: as leituras passam a cruzar as cartas com o teu Sol, Lua e Ascendente. Quanto mais souber de ti, mais pessoal fica.",
+  obSeguinte: "Seguinte",
+  obComecar: "Começar",
+  obSaltar: "Saltar",
   privTitulo: "Privacidade e dados",
   privCodigoBtn: "Gerar código de suporte (24h)",
   privCodigoTxt: "As tuas leituras são privadas. Se pedires ajuda ao suporte, dá-lhes este código — só com ele podem ver o teu histórico, e apenas durante 24 horas.",
@@ -162,6 +180,24 @@ const BR = {
   ...PT,
   erroIdade: "Você precisa ter pelo menos 18 anos para usar o Oráculo.",
   erroRate: "Muitos pedidos seguidos. Aguarde um momento e tente de novo.",
+  statDias: "dias com leituras",
+  statMedia: "cartas por leitura",
+  statMaiores: "Arcanos Maiores",
+  statNaipes: "Equilíbrio dos naipes",
+  statElemento: "Elemento dominante",
+  elFogo: "Fogo · ação e paixão",
+  elTerra: "Terra · matéria e trabalho",
+  elAr: "Ar · mente e comunicação",
+  elAgua: "Água · emoções e relações",
+  obTitulo1: "Bem-vindo ao Oráculo",
+  obTexto1: "Um espaço de reflexão através do tarô. Você escolhe uma tiragem, revela as cartas, e recebe uma leitura pensada para você.",
+  obTitulo2: "Como funciona uma tiragem",
+  obTexto2: "Escolha o tema (amor, carreira, decisão…) e o tipo de tiragem. Toque em cada carta para revelá-la — você vê logo o significado. No fim, o Oráculo tece tudo numa leitura completa.",
+  obTitulo3: "Torne-a sua",
+  obTexto3: "Preencha o perfil com sua data e hora de nascimento: as leituras passam a cruzar as cartas com seu Sol, Lua e Ascendente. Quanto mais souber de você, mais pessoal fica.",
+  obSeguinte: "Seguinte",
+  obComecar: "Começar",
+  obSaltar: "Pular",
   privTitulo: "Privacidade e dados",
   privCodigoBtn: "Gerar código de suporte (24h)",
   privCodigoTxt: "Suas leituras são privadas. Se pedir ajuda ao suporte, informe este código — só com ele podem ver seu histórico, e apenas por 24 horas.",
@@ -315,6 +351,24 @@ const EN = {
   perfilGuardado: "✓ Profile saved",
   erroIdade: "You must be at least 18 to use Oráculo.",
   erroRate: "Too many requests in a row. Please wait a moment and try again.",
+  statDias: "days with readings",
+  statMedia: "cards per reading",
+  statMaiores: "Major Arcana",
+  statNaipes: "Suit balance",
+  statElemento: "Dominant element",
+  elFogo: "Fire · action and passion",
+  elTerra: "Earth · matter and work",
+  elAr: "Air · mind and communication",
+  elAgua: "Water · emotions and relationships",
+  obTitulo1: "Welcome to Oráculo",
+  obTexto1: "A space for reflection through tarot. You choose a spread, reveal the cards, and receive a reading made for you.",
+  obTitulo2: "How a spread works",
+  obTexto2: "Pick a theme (love, career, a decision…) and the type of spread. Tap each card to reveal it — you see its meaning right away. At the end, Oráculo weaves it all into a full reading.",
+  obTitulo3: "Make it yours",
+  obTexto3: "Fill in your profile with your birth date and time: readings will then cross the cards with your Sun, Moon and Ascendant. The more it knows about you, the more personal it gets.",
+  obSeguinte: "Next",
+  obComecar: "Begin",
+  obSaltar: "Skip",
   privTitulo: "Privacy & data",
   privCodigoBtn: "Generate support code (24h)",
   privCodigoTxt: "Your readings are private. If you ask support for help, give them this code — only with it can they see your history, and only for 24 hours.",
@@ -732,6 +786,33 @@ function Anuncio({ L }) {
 
 /* ─────────── PAYWALL ─────────── */
 
+function Onboarding({ L, onFechar }) {
+  const [passo, setPasso] = useState(0);
+  const ecras = [
+    { orn: "✦", t: L.obTitulo1, p: L.obTexto1 },
+    { orn: "☾", t: L.obTitulo2, p: L.obTexto2 },
+    { orn: "✧", t: L.obTitulo3, p: L.obTexto3 },
+  ];
+  const e = ecras[passo];
+  const ultimo = passo === ecras.length - 1;
+  return (
+    <div className="ob-fundo">
+      <div className="ob-caixa">
+        <div className="ob-orn">{e.orn}</div>
+        <h2 className="ob-titulo">{e.t}</h2>
+        <p className="ob-texto">{e.p}</p>
+        <div className="ob-pontos">
+          {ecras.map((_, i) => <span key={i} className={`ob-ponto ${i === passo ? "ativo" : ""}`} />)}
+        </div>
+        <button className="cta" onClick={() => (ultimo ? onFechar() : setPasso(passo + 1))}>
+          {ultimo ? L.obComecar : L.obSeguinte}
+        </button>
+        {!ultimo && <button className="ob-saltar" onClick={onFechar}>{L.obSaltar}</button>}
+      </div>
+    </div>
+  );
+}
+
 function Paywall({ L, userId, ehPro }) {
   const ref = userId ? `?client_reference_id=${userId}` : "";
   return (
@@ -1141,6 +1222,7 @@ export default function TarotApp() {
   const ehPro = perfil?.plano === "pro";
 
   const [vista, setVista] = useState("nova"); // nova | historico | relatorio | pro
+  const [mostrarOnboarding, setMostrarOnboarding] = useState(false);
   const [ecra, setEcra] = useState("inicio");
   const [vertente, setVertente] = useState(0); // índice
   const [pergunta, setPergunta] = useState("");
@@ -1281,11 +1363,33 @@ export default function TarotApp() {
         if (c.invertida) invertidas++;
       });
     });
+    // Naipes e arcanos maiores
+    const porNaipe = { Copas: 0, Espadas: 0, Paus: 0, Ouros: 0 };
+    let maiores = 0;
+    const diasAtivos = new Set();
+    leiturasMes.forEach((l) => {
+      if (l.created_at) diasAtivos.add(String(l.created_at).slice(0, 10));
+      (l.cartas || []).forEach((cc) => {
+        const id = cc.id || "";
+        if (id.startsWith("M")) maiores++;
+        else { const n = ["Copas", "Espadas", "Paus", "Ouros"].find((x) => id.startsWith(x)); if (n) porNaipe[n]++; }
+      });
+    });
+    const naipes = Object.entries(porNaipe).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+    const elementos = { Copas: "agua", Espadas: "ar", Paus: "fogo", Ouros: "terra" };
+    const naipeDom = naipes.length ? naipes[0][0] : null;
     return {
       total,
       vertentes: Object.entries(porVertente).sort((a, b) => b[1] - a[1]),
       topCartas: Object.entries(porCarta).sort((a, b) => b[1] - a[1]).slice(0, 5),
       pctInv: totalCartas ? Math.round((invertidas / totalCartas) * 100) : 0,
+      totalCartas,
+      naipes,
+      naipeDom,
+      elementoDom: naipeDom ? elementos[naipeDom] : null,
+      pctMaiores: totalCartas ? Math.round((maiores / totalCartas) * 100) : 0,
+      diasAtivos: diasAtivos.size,
+      mediaCartas: total ? (totalCartas / total).toFixed(1) : 0,
     };
   }, [leiturasMes]);
 
@@ -1490,14 +1594,42 @@ ${L.pInstr}`;
   const maxVert = statsMes.vertentes.length ? statsMes.vertentes[0][1] : 1;
   const bloqueado = !ehPro && proximaLeitura && proximaLeitura > new Date();
 
-  function irPara(v) {
-    if ((v === "historico" || v === "relatorio") && !ehPro) setVista("pro");
-    else setVista(v);
+  // Onboarding no primeiro login de cada utilizador
+  useEffect(() => {
+    if (!sessao?.user?.id) return;
+    try {
+      const chave = `ob_visto_${sessao.user.id}`;
+      if (!localStorage.getItem(chave)) setMostrarOnboarding(true);
+    } catch (e) {}
+  }, [sessao]);
+
+  function fecharOnboarding() {
+    setMostrarOnboarding(false);
+    try { localStorage.setItem(`ob_visto_${sessao.user.id}`, "1"); } catch (e) {}
   }
+
+  function irPara(v) {
+    const destino = ((v === "historico" || v === "relatorio") && !ehPro) ? "pro" : v;
+    setVista(destino);
+    try { window.history.pushState({ vista: destino }, ""); } catch (e) {}
+  }
+
+  // Botão "voltar" do telemóvel: navega entre separadores em vez de sair da app
+  useEffect(() => {
+    try { window.history.replaceState({ vista: "nova" }, ""); } catch (e) {}
+    const aoVoltar = (ev) => {
+      const v = ev.state?.vista;
+      if (v) setVista(v);
+      else setVista("nova");
+    };
+    window.addEventListener("popstate", aoVoltar);
+    return () => window.removeEventListener("popstate", aoVoltar);
+  }, []);
 
   return (
     <div className="app">
       <style>{css}</style>
+      {mostrarOnboarding && <Onboarding L={L} onFechar={fecharOnboarding} />}
       <Ceu />
 
       <header className="topo">
@@ -1513,7 +1645,7 @@ ${L.pInstr}`;
           <div className="conta-linha">
             <span className="conta-nome">
               {perfil?.nome || sessao.user.email}
-              <button className={`badge plano ${ehPro ? "pro" : ""}`} onClick={() => setVista("pro")}>
+              <button className={`badge plano ${ehPro ? "pro" : ""}`} onClick={() => irPara("pro")}>
                 {ehPro ? "✦ Pro" : "Free"}
               </button>
             </span>
@@ -1534,7 +1666,7 @@ ${L.pInstr}`;
             <button role="tab" className={`tab ${vista === "relatorio" ? "ativo" : ""}`} onClick={() => irPara("relatorio")}>
               {L.tabRel}{!ehPro ? " 🔒" : ""}
             </button>
-            <button role="tab" className={`tab ${vista === "perfil" ? "ativo" : ""}`} onClick={() => setVista("perfil")}>{L.tabPerfil}</button>
+            <button role="tab" className={`tab ${vista === "perfil" ? "ativo" : ""}`} onClick={() => irPara("perfil")}>{L.tabPerfil}</button>
           </nav>
 
           {vista === "pro" && <Paywall L={L} userId={sessao.user.id} ehPro={ehPro} />}
@@ -1566,7 +1698,7 @@ ${L.pInstr}`;
                     )}
                     <span className="video-indisp">{L.videoIndisp}</span>
                   </div>
-                  <button className="link" onClick={() => setVista("pro")}>{L.desbloqueia}</button>
+                  <button className="link" onClick={() => irPara("pro")}>{L.desbloqueia}</button>
                 </div>
               )}
 
@@ -1663,7 +1795,7 @@ ${L.pInstr}`;
               {erro && (
                 <div className="erro"><p>{erro}</p>
                   {!interpretacao && !bloqueado && <button className="cta pequeno" onClick={interpretar}>{L.tentar}</button>}
-                  {bloqueado && <button className="cta pequeno" onClick={() => setVista("pro")}>{L.desbloqueia}</button>}
+                  {bloqueado && <button className="cta pequeno" onClick={() => irPara("pro")}>{L.desbloqueia}</button>}
                 </div>
               )}
 
@@ -1703,7 +1835,7 @@ ${L.pInstr}`;
                     <div className="bloqueio">
                       <span className="badge">{L.soPro}</span>
                       <p>{L.chatPro}</p>
-                      <button className="cta pequeno" onClick={() => setVista("pro")}>{L.desbloqueia}</button>
+                      <button className="cta pequeno" onClick={() => irPara("pro")}>{L.desbloqueia}</button>
                     </div>
                   )}
 
@@ -1769,6 +1901,47 @@ ${L.pInstr}`;
                       <span className="stat-lbl">{L.invPct}</span>
                     </div>
                   </section>
+
+                  <section className="stats-mini">
+                    <div className="stat-mini">
+                      <span className="stat-mini-num">{statsMes.diasAtivos}</span>
+                      <span className="stat-mini-lbl">{L.statDias}</span>
+                    </div>
+                    <div className="stat-mini">
+                      <span className="stat-mini-num">{statsMes.mediaCartas}</span>
+                      <span className="stat-mini-lbl">{L.statMedia}</span>
+                    </div>
+                    <div className="stat-mini">
+                      <span className="stat-mini-num">{statsMes.pctMaiores}%</span>
+                      <span className="stat-mini-lbl">{L.statMaiores}</span>
+                    </div>
+                  </section>
+
+                  {statsMes.elementoDom && (
+                    <section className="elemento-caixa">
+                      <div className="rotulo">{L.statElemento}</div>
+                      <p className="elemento-txt">
+                        {statsMes.elementoDom === "fogo" ? L.elFogo
+                          : statsMes.elementoDom === "terra" ? L.elTerra
+                          : statsMes.elementoDom === "ar" ? L.elAr : L.elAgua}
+                      </p>
+                    </section>
+                  )}
+
+                  {statsMes.naipes.length > 0 && (
+                    <section>
+                      <div className="rotulo">{L.statNaipes}</div>
+                      <div className="naipes-barra">
+                        {statsMes.naipes.map(([n, q]) => (
+                          <div key={n} className={`naipe-seg naipe-${n.toLowerCase()}`}
+                            style={{ flex: q }} title={`${n}: ${q}`}>
+                            <span className="naipe-lbl">{n}</span>
+                            <span className="naipe-n">{q}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
 
                   <section>
                     <div className="rotulo">{L.vertentes}</div>
@@ -2227,6 +2400,34 @@ const css = `
 .dois-campos .campo-grupo { flex: 1; margin-top: 14px; }
 .campo-ajuda { display: block; color: #8d83a5; font-size: 11.5px; margin-top: 4px; font-style: italic; }
 select.campo { cursor: pointer; }
+.stats-mini { display: flex; gap: 10px; margin-bottom: 20px; }
+.stat-mini { flex: 1; background: rgba(30,22,54,.5); border: 1px solid rgba(150,130,200,.16);
+  border-radius: 13px; padding: 14px 8px; text-align: center; }
+.stat-mini-num { display: block; font-family: 'Cormorant Garamond', serif; font-size: 26px; color: #c9a35c; line-height: 1; }
+.stat-mini-lbl { display: block; font-size: 10.5px; color: #948aae; margin-top: 6px; line-height: 1.3; }
+.elemento-caixa { margin-bottom: 20px; }
+.elemento-txt { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #cdbdf0; font-style: italic; }
+.naipes-barra { display: flex; gap: 3px; height: 54px; border-radius: 11px; overflow: hidden; margin-bottom: 20px; }
+.naipe-seg { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 42px; transition: .3s; }
+.naipe-lbl { font-size: 10px; letter-spacing: .5px; opacity: .85; }
+.naipe-n { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 600; }
+.naipe-copas { background: rgba(90,130,200,.35); color: #b9d0f0; }
+.naipe-espadas { background: rgba(150,150,180,.32); color: #d6d6e8; }
+.naipe-paus { background: rgba(200,110,70,.32); color: #f0c3a8; }
+.naipe-ouros { background: rgba(180,150,70,.32); color: #f0dda8; }
+.ob-fundo { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse 80% 50% at 50% 25%, rgba(110,80,180,.32), transparent), rgba(13,10,26,.97);
+  padding: 26px; animation: surgir .4s ease both; }
+.ob-caixa { max-width: 340px; width: 100%; text-align: center; }
+.ob-orn { color: #c9a35c; font-size: 30px; margin-bottom: 18px; letter-spacing: 6px; }
+.ob-titulo { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 600; color: #e9e3f2; margin-bottom: 14px; line-height: 1.15; }
+.ob-texto { font-size: 15px; line-height: 1.65; color: #b8aecb; margin-bottom: 26px; }
+.ob-pontos { display: flex; gap: 7px; justify-content: center; margin-bottom: 22px; }
+.ob-ponto { width: 7px; height: 7px; border-radius: 50%; background: rgba(150,130,200,.3); transition: .3s; }
+.ob-ponto.ativo { background: #c9a35c; width: 20px; border-radius: 4px; }
+.ob-saltar { display: block; margin: 14px auto 0; background: none; border: none; color: #948aae;
+  font-family: inherit; font-size: 13.5px; cursor: pointer; text-decoration: underline; }
 .priv-zona { margin-top: 34px; padding-top: 22px; border-top: 1px solid rgba(150,130,200,.18); }
 .priv-titulo { font-family: 'Cormorant Garamond', serif; font-size: 21px; color: #cdbdf0; margin-bottom: 8px; font-weight: 600; }
 .priv-txt { font-size: 13px; line-height: 1.55; color: #948aae; margin-bottom: 14px; }
