@@ -87,6 +87,21 @@ const PT = {
   perfilGuardado: "✓ Perfil guardado",
   erroIdade: "Tens de ter pelo menos 18 anos para usar o Oráculo.",
   erroRate: "Demasiados pedidos seguidos. Aguarda um momento e tenta de novo.",
+  relCartaMes: "A tua carta do mês",
+  relVezes: "vezes",
+  relEvolucao: "Como evoluíste",
+  relAntes: "antes:",
+  relFoco: "Foco",
+  relRitmo: "O teu ritmo",
+  ritmoManha: "Consultas o Oráculo sobretudo de manhã — começas o dia a ouvir-te.",
+  ritmoTarde: "Procuras o Oráculo mais à tarde — uma pausa para refletir no meio do dia.",
+  ritmoNoite: "É à noite que mais consultas — o momento de fazer o balanço do dia.",
+  ritmoMadrugada: "Consultas o Oráculo na calada da madrugada — quando o mundo silencia.",
+  relSint1: "Este mês tiveste",
+  relSint2: "sobretudo à volta de",
+  relSint3: "com destaque para",
+  relSint4: "e uma energia de",
+  relElFogo: "ação e paixão", relElTerra: "matéria e concretização", relElAr: "mente e clareza", relElAgua: "emoção e ligação",
   subEstado: "A tua subscrição",
   subAtivo: "Ativa",
   subPlanoAtual: "Plano atual",
@@ -192,6 +207,21 @@ const BR = {
   ...PT,
   erroIdade: "Você precisa ter pelo menos 18 anos para usar o Oráculo.",
   erroRate: "Muitos pedidos seguidos. Aguarde um momento e tente de novo.",
+  relCartaMes: "Sua carta do mês",
+  relVezes: "vezes",
+  relEvolucao: "Como você evoluiu",
+  relAntes: "antes:",
+  relFoco: "Foco",
+  relRitmo: "Seu ritmo",
+  ritmoManha: "Você consulta o Oráculo sobretudo de manhã — começa o dia se ouvindo.",
+  ritmoTarde: "Procura o Oráculo mais à tarde — uma pausa para refletir no meio do dia.",
+  ritmoNoite: "É à noite que mais consulta — o momento de fazer o balanço do dia.",
+  ritmoMadrugada: "Consulta o Oráculo na madrugada — quando o mundo silencia.",
+  relSint1: "Este mês você teve",
+  relSint2: "sobretudo em torno de",
+  relSint3: "com destaque para",
+  relSint4: "e uma energia de",
+  relElFogo: "ação e paixão", relElTerra: "matéria e concretização", relElAr: "mente e clareza", relElAgua: "emoção e ligação",
   subEstado: "Sua assinatura",
   subAtivo: "Ativa",
   subPlanoAtual: "Plano atual",
@@ -374,6 +404,21 @@ const EN = {
   perfilGuardado: "✓ Profile saved",
   erroIdade: "You must be at least 18 to use Oráculo.",
   erroRate: "Too many requests in a row. Please wait a moment and try again.",
+  relCartaMes: "Your card of the month",
+  relVezes: "times",
+  relEvolucao: "How you evolved",
+  relAntes: "before:",
+  relFoco: "Focus",
+  relRitmo: "Your rhythm",
+  ritmoManha: "You consult Oráculo mostly in the morning — starting the day by listening to yourself.",
+  ritmoTarde: "You seek Oráculo more in the afternoon — a pause to reflect mid-day.",
+  ritmoNoite: "It's at night you consult most — the moment to take stock of the day.",
+  ritmoMadrugada: "You consult Oráculo in the small hours — when the world falls silent.",
+  relSint1: "This month you had",
+  relSint2: "mostly around",
+  relSint3: "notably",
+  relSint4: "and an energy of",
+  relElFogo: "action and passion", relElTerra: "matter and grounding", relElAr: "mind and clarity", relElAgua: "emotion and connection",
   subEstado: "Your subscription",
   subAtivo: "Active",
   subPlanoAtual: "Current plan",
@@ -1502,46 +1547,59 @@ export default function TarotApp() {
   );
 
   const statsMes = useMemo(() => {
-    const total = leiturasMes.length;
-    const porVertente = {}; const porCarta = {};
-    let invertidas = 0, totalCartas = 0;
-    leiturasMes.forEach((l) => {
-      porVertente[l.vertente] = (porVertente[l.vertente] || 0) + 1;
-      (l.cartas || []).forEach((c) => {
-        porCarta[c.nome] = (porCarta[c.nome] || 0) + 1;
-        totalCartas++;
-        if (c.invertida) invertidas++;
+    const analisar = (arr) => {
+      const porVertente = {}, porCarta = {};
+      let invertidas = 0, totalCartas = 0, maiores = 0;
+      const porNaipe = { Copas: 0, Espadas: 0, Paus: 0, Ouros: 0 };
+      const dias = new Set();
+      const horas = { manha: 0, tarde: 0, noite: 0, madrugada: 0 };
+      arr.forEach((l) => {
+        porVertente[l.vertente] = (porVertente[l.vertente] || 0) + 1;
+        const d = l.data ? new Date(l.data) : null;
+        if (d) {
+          dias.add(l.data.slice(0, 10));
+          const h = d.getHours();
+          if (h >= 6 && h < 12) horas.manha++;
+          else if (h >= 12 && h < 19) horas.tarde++;
+          else if (h >= 19 && h < 24) horas.noite++;
+          else horas.madrugada++;
+        }
+        (l.cartas || []).forEach((cc) => {
+          porCarta[cc.nome] = (porCarta[cc.nome] || 0) + 1;
+          totalCartas++;
+          if (cc.invertida) invertidas++;
+          const id = cc.id || "";
+          if (id.startsWith("M")) maiores++;
+          else { const n = ["Copas", "Espadas", "Paus", "Ouros"].find((x) => id.startsWith(x)); if (n) porNaipe[n]++; }
+        });
       });
-    });
-    // Naipes e arcanos maiores
-    const porNaipe = { Copas: 0, Espadas: 0, Paus: 0, Ouros: 0 };
-    let maiores = 0;
-    const diasAtivos = new Set();
-    leiturasMes.forEach((l) => {
-      if (l.created_at) diasAtivos.add(String(l.created_at).slice(0, 10));
-      (l.cartas || []).forEach((cc) => {
-        const id = cc.id || "";
-        if (id.startsWith("M")) maiores++;
-        else { const n = ["Copas", "Espadas", "Paus", "Ouros"].find((x) => id.startsWith(x)); if (n) porNaipe[n]++; }
-      });
-    });
-    const naipes = Object.entries(porNaipe).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
-    const elementos = { Copas: "agua", Espadas: "ar", Paus: "fogo", Ouros: "terra" };
-    const naipeDom = naipes.length ? naipes[0][0] : null;
-    return {
-      total,
-      vertentes: Object.entries(porVertente).sort((a, b) => b[1] - a[1]),
-      topCartas: Object.entries(porCarta).sort((a, b) => b[1] - a[1]).slice(0, 5),
-      pctInv: totalCartas ? Math.round((invertidas / totalCartas) * 100) : 0,
-      totalCartas,
-      naipes,
-      naipeDom,
-      elementoDom: naipeDom ? elementos[naipeDom] : null,
-      pctMaiores: totalCartas ? Math.round((maiores / totalCartas) * 100) : 0,
-      diasAtivos: diasAtivos.size,
-      mediaCartas: total ? (totalCartas / total).toFixed(1) : 0,
+      const naipes = Object.entries(porNaipe).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+      const elementos = { Copas: "agua", Espadas: "ar", Paus: "fogo", Ouros: "terra" };
+      const cartaTop = Object.entries(porCarta).sort((a, b) => b[1] - a[1])[0] || null;
+      const vertTop = Object.entries(porVertente).sort((a, b) => b[1] - a[1])[0] || null;
+      const ritmo = Object.entries(horas).sort((a, b) => b[1] - a[1])[0];
+      return {
+        total: arr.length, totalCartas,
+        vertentes: Object.entries(porVertente).sort((a, b) => b[1] - a[1]),
+        topCartas: Object.entries(porCarta).sort((a, b) => b[1] - a[1]).slice(0, 5),
+        pctInv: totalCartas ? Math.round((invertidas / totalCartas) * 100) : 0,
+        pctMaiores: totalCartas ? Math.round((maiores / totalCartas) * 100) : 0,
+        naipes, naipeDom: naipes.length ? naipes[0][0] : null,
+        elementoDom: naipes.length ? elementos[naipes[0][0]] : null,
+        diasAtivos: dias.size,
+        mediaCartas: arr.length ? (totalCartas / arr.length).toFixed(1) : 0,
+        cartaTop, vertTop,
+        ritmo: ritmo && ritmo[1] > 0 ? ritmo[0] : null,
+      };
     };
-  }, [leiturasMes]);
+    const atual = analisar(leiturasMes);
+    // mês anterior para comparação
+    const idx = meses.indexOf(mesSel);
+    const mesAnt = idx >= 0 && idx < meses.length - 1 ? meses[idx + 1] : null;
+    const leiturasAnt = mesAnt ? leituras.filter((l) => l.data.slice(0, 7) === mesAnt) : [];
+    const anterior = mesAnt ? analisar(leiturasAnt) : null;
+    return { ...atual, anterior, mesAnt };
+  }, [leiturasMes, leituras, meses, mesSel]);
 
   /* ── leitura ── */
 
@@ -1663,7 +1721,7 @@ ${L.pInstr}`;
         pergunta: pergunta.trim(),
         tiragem_nome: tiragem.nome,
         posicoes: tiragem.pos,
-        cartas: cartas.map((c) => ({ nome: c.nome, invertida: c.invertida })),
+        cartas: cartas.map((c) => ({ id: c.id, nome: c.nome, invertida: c.invertida })),
         interpretacao: texto,
         titulo, notas: "",
       });
@@ -1741,6 +1799,24 @@ ${L.pInstr}`;
 
   const blocos = useMemo(() => emBlocos(interpretacao), [interpretacao]);
   const blocosAnalise = useMemo(() => emBlocos(analiseMes), [analiseMes]);
+  const seta = (agora, antes) => (agora > antes ? "↑" : agora < antes ? "↓" : "=");
+
+  // Síntese em linguagem natural do mês
+  const sinteseRel = useMemo(() => {
+    if (!leiturasMes.length) return "";
+    const s = statsMes;
+    const partes = [];
+    partes.push(`${L.relSint1} ${s.total} ${s.total === 1 ? L.leituraS.toLowerCase() : L.leiturasS.toLowerCase()}`);
+    if (s.vertTop) partes.push(`${L.relSint2} ${s.vertTop[0].toLowerCase()}`);
+    if (s.cartaTop && s.cartaTop[1] > 1) partes.push(`${L.relSint3} ${s.cartaTop[0]}`);
+    if (s.elementoDom) {
+      const el = s.elementoDom === "fogo" ? L.relElFogo : s.elementoDom === "terra" ? L.relElTerra
+        : s.elementoDom === "ar" ? L.relElAr : L.relElAgua;
+      partes.push(`${L.relSint4} ${el}`);
+    }
+    return partes.join(". ") + ".";
+  }, [leiturasMes, statsMes, L]);
+
   const maxVert = statsMes.vertentes.length ? statsMes.vertentes[0][1] : 1;
   const bloqueado = !ehPro && proximaLeitura && proximaLeitura > new Date();
 
@@ -2041,6 +2117,59 @@ ${L.pInstr}`;
                 <div className="vazio"><div className="vazio-orn">◐</div><p>{L.semMes}</p></div>
               ) : (
                 <>
+                  {sinteseRel && (
+                    <section className="rel-sintese">
+                      <div className="rel-sintese-orn">✦ ☾ ✦</div>
+                      <p className="rel-sintese-txt">{sinteseRel}</p>
+                    </section>
+                  )}
+
+                  {statsMes.cartaTop && (
+                    <section className="rel-carta-mes">
+                      <div className="rotulo">{L.relCartaMes}</div>
+                      <div className="rel-carta-caixa">
+                        <span className="rel-carta-nome">{statsMes.cartaTop[0]}</span>
+                        <span className="rel-carta-vezes">{statsMes.cartaTop[1]}× {L.relVezes}</span>
+                      </div>
+                    </section>
+                  )}
+
+                  {statsMes.anterior && statsMes.anterior.total > 0 && (
+                    <section className="rel-evolucao">
+                      <div className="rotulo">{L.relEvolucao}</div>
+                      <div className="rel-evo-linhas">
+                        <div className="rel-evo">
+                          <span className="rel-evo-lbl">{L.leiturasS}</span>
+                          <span className="rel-evo-cmp">
+                            {statsMes.total} <em>{seta(statsMes.total, statsMes.anterior.total)}</em>
+                            <small>{L.relAntes} {statsMes.anterior.total}</small>
+                          </span>
+                        </div>
+                        {statsMes.vertTop && statsMes.anterior.vertTop && (
+                          <div className="rel-evo">
+                            <span className="rel-evo-lbl">{L.relFoco}</span>
+                            <span className="rel-evo-cmp">
+                              {statsMes.vertTop[0]}
+                              {statsMes.vertTop[0] !== statsMes.anterior.vertTop[0] &&
+                                <small>{L.relAntes} {statsMes.anterior.vertTop[0]}</small>}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                  )}
+
+                  {statsMes.ritmo && (
+                    <section className="rel-ritmo">
+                      <div className="rotulo">{L.relRitmo}</div>
+                      <p className="rel-ritmo-txt">
+                        {statsMes.ritmo === "manha" ? L.ritmoManha
+                          : statsMes.ritmo === "tarde" ? L.ritmoTarde
+                          : statsMes.ritmo === "noite" ? L.ritmoNoite : L.ritmoMadrugada}
+                      </p>
+                    </section>
+                  )}
+
                   <section className="stats">
                     <div className="stat-grande">
                       <span className="stat-num">{statsMes.total}</span>
@@ -2550,6 +2679,22 @@ const css = `
 .dois-campos .campo-grupo { flex: 1; margin-top: 14px; }
 .campo-ajuda { display: block; color: #8d83a5; font-size: 11.5px; margin-top: 4px; font-style: italic; }
 select.campo { cursor: pointer; }
+.rel-sintese { background: linear-gradient(135deg, rgba(201,163,92,.12), rgba(110,80,180,.1)); border: 1px solid rgba(201,163,92,.28); border-radius: 16px; padding: 22px 22px 24px; margin-bottom: 22px; text-align: center; }
+.rel-sintese-orn { color: #c9a35c; letter-spacing: 5px; font-size: 13px; margin-bottom: 12px; }
+.rel-sintese-txt { font-family: 'Cormorant Garamond', serif; font-size: 19px; line-height: 1.5; color: #e9e3f2; font-style: italic; }
+.rel-carta-mes { margin-bottom: 20px; }
+.rel-carta-caixa { display: flex; align-items: center; justify-content: space-between; background: rgba(30,22,54,.5); border: 1px solid rgba(201,163,92,.25); border-radius: 13px; padding: 16px 20px; }
+.rel-carta-nome { font-family: 'Cormorant Garamond', serif; font-size: 23px; color: #e8c87e; }
+.rel-carta-vezes { font-size: 12.5px; color: #948aae; }
+.rel-evolucao { margin-bottom: 20px; }
+.rel-evo-linhas { display: flex; flex-direction: column; gap: 10px; }
+.rel-evo { display: flex; justify-content: space-between; align-items: center; background: rgba(30,22,54,.4); border: 1px solid rgba(150,130,200,.15); border-radius: 11px; padding: 13px 16px; }
+.rel-evo-lbl { font-size: 13px; color: #948aae; }
+.rel-evo-cmp { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #cdbdf0; display: flex; align-items: center; gap: 8px; }
+.rel-evo-cmp em { font-style: normal; color: #c9a35c; }
+.rel-evo-cmp small { font-family: 'Jost', sans-serif; font-size: 11px; color: #948aae; }
+.rel-ritmo { margin-bottom: 22px; }
+.rel-ritmo-txt { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-style: italic; color: #b8aecb; line-height: 1.5; }
 .stats-mini { display: flex; gap: 10px; margin-bottom: 20px; }
 .stat-mini { flex: 1; background: rgba(30,22,54,.5); border: 1px solid rgba(150,130,200,.16);
   border-radius: 13px; padding: 14px 8px; text-align: center; }
