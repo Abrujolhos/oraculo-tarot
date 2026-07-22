@@ -6,6 +6,7 @@ import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient";
 // Links de pagamento Stripe — preencher no .env ou variáveis Vercel
 const STRIPE_LINK_MENSAL = process.env.REACT_APP_STRIPE_MENSAL || "https://buy.stripe.com/SUBSTITUIR_MENSAL";
 const STRIPE_LINK_ANUAL = process.env.REACT_APP_STRIPE_ANUAL || "https://buy.stripe.com/SUBSTITUIR_ANUAL";
+const STRIPE_PORTAL = process.env.REACT_APP_STRIPE_PORTAL || "https://billing.stripe.com/p/login/SUBSTITUIR_PORTAL";
 
 /* ─────────── i18n ─────────── */
 
@@ -86,6 +87,17 @@ const PT = {
   perfilGuardado: "✓ Perfil guardado",
   erroIdade: "Tens de ter pelo menos 18 anos para usar o Oráculo.",
   erroRate: "Demasiados pedidos seguidos. Aguarda um momento e tenta de novo.",
+  subEstado: "A tua subscrição",
+  subAtivo: "Ativa",
+  subPlanoAtual: "Plano atual",
+  subGerir: "Gerir subscrição e faturas",
+  subGerirTxt: "Alterar plano, ver faturas ou cancelar. Abre a página segura de gestão.",
+  subCancelarNota: "Podes cancelar a qualquer momento. Manténs o acesso Pro até ao fim do período pago.",
+  subComparar: "Free vs Pro",
+  subFree: "Free",
+  subPro: "Pro",
+  subEmBreve: "A gestão de subscrições estará disponível em breve. Para já, contacta o suporte.",
+  astroNota: "* Lua aproximada — preenche a hora de nascimento para maior precisão e para veres o teu Ascendente.",
   statDias: "dias com leituras",
   statMedia: "cartas por leitura",
   statMaiores: "Arcanos Maiores",
@@ -180,6 +192,17 @@ const BR = {
   ...PT,
   erroIdade: "Você precisa ter pelo menos 18 anos para usar o Oráculo.",
   erroRate: "Muitos pedidos seguidos. Aguarde um momento e tente de novo.",
+  subEstado: "Sua assinatura",
+  subAtivo: "Ativa",
+  subPlanoAtual: "Plano atual",
+  subGerir: "Gerenciar assinatura e faturas",
+  subGerirTxt: "Alterar plano, ver faturas ou cancelar. Abre a página segura de gerenciamento.",
+  subCancelarNota: "Você pode cancelar quando quiser. Mantém o acesso Pro até o fim do período pago.",
+  subComparar: "Free vs Pro",
+  subFree: "Free",
+  subPro: "Pro",
+  subEmBreve: "O gerenciamento de assinaturas estará disponível em breve. Por ora, contate o suporte.",
+  astroNota: "* Lua aproximada — preencha a hora de nascimento para maior precisão e para ver seu Ascendente.",
   statDias: "dias com leituras",
   statMedia: "cartas por leitura",
   statMaiores: "Arcanos Maiores",
@@ -351,6 +374,17 @@ const EN = {
   perfilGuardado: "✓ Profile saved",
   erroIdade: "You must be at least 18 to use Oráculo.",
   erroRate: "Too many requests in a row. Please wait a moment and try again.",
+  subEstado: "Your subscription",
+  subAtivo: "Active",
+  subPlanoAtual: "Current plan",
+  subGerir: "Manage subscription & invoices",
+  subGerirTxt: "Change plan, view invoices or cancel. Opens the secure management page.",
+  subCancelarNota: "You can cancel anytime. You keep Pro access until the end of the paid period.",
+  subComparar: "Free vs Pro",
+  subFree: "Free",
+  subPro: "Pro",
+  subEmBreve: "Subscription management will be available soon. For now, please contact support.",
+  astroNota: "* Moon is approximate — add your birth time for precision and to see your Ascendant.",
   statDias: "days with readings",
   statMedia: "cards per reading",
   statMaiores: "Major Arcana",
@@ -596,6 +630,81 @@ function idadeAnos(dataISO) {
   return idade;
 }
 
+// ── Astronomia leve: Lua e Ascendente (algoritmos padrão, precisão suficiente para signos)
+const SIGNOS_ORD = ["Carneiro","Touro","Gémeos","Caranguejo","Leão","Virgem","Balança","Escorpião","Sagitário","Capricórnio","Aquário","Peixes"];
+const CIDADES_PT = {
+  "lisboa":[38.72,-9.14],"porto":[41.15,-8.61],"braga":[41.55,-8.42],"guimaraes":[41.44,-8.30],
+  "vila do conde":[41.35,-8.74],"povoa de varzim":[41.38,-8.76],"matosinhos":[41.18,-8.70],
+  "gaia":[41.13,-8.61],"vila nova de gaia":[41.13,-8.61],"coimbra":[40.21,-8.43],"aveiro":[40.64,-8.65],
+  "leiria":[39.74,-8.81],"setubal":[38.52,-8.89],"faro":[37.02,-7.93],"evora":[38.57,-7.91],
+  "viseu":[40.66,-7.91],"guarda":[40.54,-7.27],"braganca":[41.81,-6.76],"funchal":[32.65,-16.91],
+  "ponta delgada":[37.74,-25.67],"viana do castelo":[41.69,-8.83],"santarem":[39.24,-8.69],
+  "beja":[38.02,-7.86],"castelo branco":[39.82,-7.49],"portalegre":[39.29,-7.43],"barcelos":[41.53,-8.62],
+  "famalicao":[41.41,-8.52],"maia":[41.23,-8.62],"valongo":[41.19,-8.50],
+  "sao paulo":[-23.55,-46.63],"rio de janeiro":[-22.91,-43.17],"belo horizonte":[-19.92,-43.94],
+  "brasilia":[-15.79,-47.88],"salvador":[-12.97,-38.51],"fortaleza":[-3.72,-38.54],"recife":[-8.05,-34.88],
+  "curitiba":[-25.43,-49.27],"porto alegre":[-30.03,-51.23],"luanda":[-8.84,13.23],"maputo":[-25.97,32.58],
+  "londres":[51.51,-0.13],"london":[51.51,-0.13],"paris":[48.86,2.35],"madrid":[40.42,-3.70],
+};
+function coordsDe(local) {
+  if (!local) return null;
+  const l = local.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  for (const cidade in CIDADES_PT) if (l.includes(cidade)) return CIDADES_PT[cidade];
+  return [39.5, -8.0];
+}
+function diaJuliano(d) { return d.getTime() / 86400000 + 2440587.5; }
+// Longitude eclíptica da Lua (série abreviada, erro < ~0.5°, suficiente para o signo)
+function luaLongitude(jd) {
+  const T = (jd - 2451545) / 36525;
+  const L = 218.316 + 481267.8813 * T;
+  const M = 134.963 + 477198.8676 * T;
+  const Ms = 357.529 + 35999.0503 * T;
+  const D = 297.850 + 445267.1115 * T;
+  const F = 93.272 + 483202.0175 * T;
+  const r = Math.PI / 180;
+  let lon = L
+    + 6.289 * Math.sin(M * r)
+    - 1.274 * Math.sin((2 * D - M) * r)
+    + 0.658 * Math.sin(2 * D * r)
+    - 0.186 * Math.sin(Ms * r)
+    - 0.059 * Math.sin((2 * M - 2 * D) * r)
+    - 0.057 * Math.sin((M - 2 * D + Ms) * r)
+    + 0.053 * Math.sin((M + 2 * D) * r)
+    + 0.046 * Math.sin((2 * D - Ms) * r)
+    + 0.041 * Math.sin((M - Ms) * r)
+    - 0.035 * Math.sin(D * r)
+    - 0.031 * Math.sin((M + Ms) * r)
+    - 0.015 * Math.sin((2 * F - 2 * D) * r)
+    + 0.011 * Math.sin((M - 4 * D) * r);
+  return ((lon % 360) + 360) % 360;
+}
+function luaSignoDe(dataISO, hora) {
+  if (!dataISO) return null;
+  const h = hora && /^\d{2}:\d{2}/.test(hora) ? hora : "12:00";
+  const d = new Date(dataISO + "T" + h + ":00Z");
+  if (isNaN(d.getTime())) return null;
+  return { signo: SIGNOS_ORD[Math.floor(luaLongitude(diaJuliano(d)) / 30)], aprox: !(hora && /^\d{2}:\d{2}/.test(hora)) };
+}
+function ascendenteDe(dataISO, hora, local) {
+  if (!dataISO || !hora || !/^\d{2}:\d{2}/.test(hora) || !local) return null;
+  const coords = coordsDe(local);
+  if (!coords) return null;
+  const [lat, lon] = coords;
+  const d = new Date(dataISO + "T" + hora + ":00Z");
+  if (isNaN(d.getTime())) return null;
+  const jd = diaJuliano(d);
+  const T = (jd - 2451545) / 36525;
+  // Tempo sideral de Greenwich (graus)
+  let gst = 280.46061837 + 360.98564736629 * (jd - 2451545) + 0.000387933 * T * T;
+  gst = ((gst % 360) + 360) % 360;
+  const lst = ((gst + lon) % 360 + 360) % 360;
+  const r = Math.PI / 180;
+  const eps = 23.4393 * r, phi = lat * r, ramc = lst * r;
+  let asc = Math.atan2(Math.cos(ramc), -(Math.sin(ramc) * Math.cos(eps) + Math.tan(phi) * Math.sin(eps)));
+  let deg = ((asc / r) % 360 + 360) % 360;
+  return SIGNOS_ORD[Math.floor(deg / 30)];
+}
+
 function signoDe(dataISO) {
   if (!dataISO) return "";
   const d = new Date(dataISO + "T12:00:00");
@@ -822,7 +931,42 @@ function Paywall({ L, userId, ehPro }) {
         <h2 className="pw-tit">{L.proTit}</h2>
         <p className="pw-sub">{L.proSub}</p>
         {ehPro ? (
-          <p className="pw-ja">{L.jaPro}</p>
+          <>
+            <div className="sub-estado">
+              <div className="sub-linha">
+                <span className="sub-lbl">{L.subPlanoAtual}</span>
+                <span className="sub-valor">Pro <span className="sub-badge">{L.subAtivo}</span></span>
+              </div>
+            </div>
+
+            <div className="sub-comparar">
+              <div className="rotulo">{L.subComparar}</div>
+              <div className="comp-tabela">
+                <div className="comp-cab">
+                  <span></span><span>{L.subFree}</span><span className="comp-pro">{L.subPro}</span>
+                </div>
+                {L.proLista.map((f, i) => (
+                  <div className="comp-linha" key={i}>
+                    <span className="comp-f">{f}</span>
+                    <span className="comp-x">—</span>
+                    <span className="comp-v">✦</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="sub-gerir">
+              <p className="sub-gerir-txt">{L.subGerirTxt}</p>
+              {STRIPE_PORTAL && STRIPE_PORTAL.indexOf("SUBSTITUIR") === -1 ? (
+                <a className="pw-cta bloco" href={`${STRIPE_PORTAL}${ref}`} target="_blank" rel="noreferrer">
+                  {L.subGerir}
+                </a>
+              ) : (
+                <p className="sub-embreve">{L.subEmBreve}</p>
+              )}
+              <p className="sub-nota">{L.subCancelarNota}</p>
+            </div>
+          </>
         ) : (
           <>
             <ul className="pw-lista">
@@ -1039,6 +1183,9 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
 
   const signoPt = signoDe(nasc);
   const signoMostra = idioma === "en" && L.signos?.[signoPt] ? L.signos[signoPt] : signoPt;
+  const luaCalc = useMemo(() => luaSignoDe(nasc, hora), [nasc, hora]);
+  const ascCalc = useMemo(() => ascendenteDe(nasc, hora, local), [nasc, hora, local]);
+  const traduzSigno = (s) => (idioma === "en" && L.signos?.[s] ? L.signos[s] : s);
 
   async function guardar() {
     // Verificação de idade mínima (18 anos) — só quando há data preenchida
@@ -1098,6 +1245,9 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
           maxLength={10}
         />
         {signoMostra && <span className="signo-chip">☉ {signoMostra}</span>}
+        {luaCalc && <span className="signo-chip lua">☾ {traduzSigno(luaCalc.signo)}{luaCalc.aprox ? "*" : ""}</span>}
+        {ascCalc && <span className="signo-chip asc">↑ {traduzSigno(ascCalc)}</span>}
+        {luaCalc?.aprox && <span className="astro-nota">{L.astroNota}</span>}
       </div>
 
       <div className="dois-campos">
@@ -2428,6 +2578,29 @@ select.campo { cursor: pointer; }
 .ob-ponto.ativo { background: #c9a35c; width: 20px; border-radius: 4px; }
 .ob-saltar { display: block; margin: 14px auto 0; background: none; border: none; color: #948aae;
   font-family: inherit; font-size: 13.5px; cursor: pointer; text-decoration: underline; }
+.sub-estado { background: rgba(201,163,92,.08); border: 1px solid rgba(201,163,92,.3); border-radius: 14px; padding: 16px 18px; margin-bottom: 22px; }
+.sub-linha { display: flex; justify-content: space-between; align-items: center; }
+.sub-lbl { font-size: 13px; color: #948aae; }
+.sub-valor { font-family: 'Cormorant Garamond', serif; font-size: 21px; color: #e8c87e; display: flex; align-items: center; gap: 8px; }
+.sub-badge { font-family: 'Jost', sans-serif; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; background: rgba(123,179,126,.2); color: #7bb37e; padding: 3px 9px; border-radius: 99px; }
+.sub-comparar { margin-bottom: 22px; }
+.comp-tabela { border: 1px solid rgba(150,130,200,.18); border-radius: 13px; overflow: hidden; }
+.comp-cab, .comp-linha { display: grid; grid-template-columns: 1fr 52px 52px; align-items: center; }
+.comp-cab { background: rgba(201,163,92,.1); padding: 9px 14px; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: #948aae; text-align: center; }
+.comp-cab span:first-child { text-align: left; }
+.comp-pro { color: #e8c87e; }
+.comp-linha { padding: 11px 14px; border-top: 1px solid rgba(150,130,200,.12); font-size: 13.5px; }
+.comp-f { color: #b8aecb; line-height: 1.35; }
+.comp-x { text-align: center; color: #5d5670; }
+.comp-v { text-align: center; color: #c9a35c; }
+.sub-gerir { text-align: center; }
+.sub-gerir-txt { font-size: 13.5px; color: #948aae; margin-bottom: 14px; }
+.pw-cta.bloco { display: block; padding: 13px; border-radius: 99px; background: linear-gradient(180deg,#e8c87e,#c9a35c); color: #0d0a1a; font-weight: 600; text-decoration: none; }
+.sub-embreve { font-size: 13px; color: #d9a441; background: rgba(217,164,65,.08); border: 1px solid rgba(217,164,65,.25); border-radius: 11px; padding: 12px; }
+.sub-nota { font-size: 11.5px; color: #948aae; margin-top: 12px; font-style: italic; }
+.signo-chip.lua { color: #b9c6f0; border-color: rgba(150,170,230,.3); }
+.signo-chip.asc { color: #f0c8a8; border-color: rgba(220,160,110,.3); }
+.astro-nota { display: block; font-size: 11px; color: #948aae; margin-top: 6px; font-style: italic; }
 .priv-zona { margin-top: 34px; padding-top: 22px; border-top: 1px solid rgba(150,130,200,.18); }
 .priv-titulo { font-family: 'Cormorant Garamond', serif; font-size: 21px; color: #cdbdf0; margin-bottom: 8px; font-weight: 600; }
 .priv-txt { font-size: 13px; line-height: 1.55; color: #948aae; margin-bottom: 14px; }
