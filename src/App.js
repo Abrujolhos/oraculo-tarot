@@ -444,11 +444,11 @@ async function dbGuardarAnalise(token, userId, mes, texto) {
   });
 }
 
-async function chamarIA(token, messages, tipo, idioma) {
+async function chamarIA(token, messages, tipo, idioma, cartaIds) {
   const r = await fetch(`${SUPABASE_URL}/functions/v1/interpretar`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ messages, tipo, idioma }),
+    body: JSON.stringify({ messages, tipo, idioma, carta_ids: cartaIds || [] }),
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok || d.error) {
@@ -1285,7 +1285,7 @@ ${L.pInstr}`;
   async function interpretar() {
     setAInterpretar(true); setErro("");
     try {
-      const texto = await chamarIA(sessao.token, [{ role: "user", content: promptLeitura() }], "leitura", idioma);
+      const texto = await chamarIA(sessao.token, [{ role: "user", content: promptLeitura() }], "leitura", idioma, cartas.map((c) => c.id));
       setInterpretacao(texto);
       if (!ehPro) setProximaLeitura(new Date(Date.now() + 7 * 864e5));
       if (ehPro) await guardarLeitura(texto);
