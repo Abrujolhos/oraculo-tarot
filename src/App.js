@@ -131,6 +131,9 @@ const PT = {
   obSeguinte: "Seguinte",
   obComecar: "Começar",
   obSaltar: "Saltar",
+  memTitulo: "O que o Oráculo sabe sobre ti",
+  memTxt: "Factos recolhidos das tuas conversas, usados para tornar as leituras mais pertinentes. Apaga o que não quiseres guardar.",
+  memApagar: "Apagar este facto",
   privTitulo: "Privacidade e dados",
   privCodigoBtn: "Gerar código de suporte (24h)",
   privCodigoTxt: "As tuas leituras são privadas. Se pedires ajuda ao suporte, dá-lhes este código — só com ele podem ver o teu histórico, e apenas durante 24 horas.",
@@ -251,6 +254,9 @@ const BR = {
   obSeguinte: "Seguinte",
   obComecar: "Começar",
   obSaltar: "Pular",
+  memTitulo: "O que o Oráculo sabe sobre você",
+  memTxt: "Fatos coletados das suas conversas, usados para tornar as leituras mais pertinentes. Apague o que não quiser guardar.",
+  memApagar: "Apagar este fato",
   privTitulo: "Privacidade e dados",
   privCodigoBtn: "Gerar código de suporte (24h)",
   privCodigoTxt: "Suas leituras são privadas. Se pedir ajuda ao suporte, informe este código — só com ele podem ver seu histórico, e apenas por 24 horas.",
@@ -448,6 +454,9 @@ const EN = {
   obSeguinte: "Next",
   obComecar: "Begin",
   obSaltar: "Skip",
+  memTitulo: "What Oráculo knows about you",
+  memTxt: "Facts gathered from your conversations, used to make readings more relevant. Delete anything you'd rather not keep.",
+  memApagar: "Delete this fact",
   privTitulo: "Privacy & data",
   privCodigoBtn: "Generate support code (24h)",
   privCodigoTxt: "Your readings are private. If you ask support for help, give them this code — only with it can they see your history, and only for 24 hours.",
@@ -1179,6 +1188,28 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
   const [guardado, setGuardado] = useState(false);
   const [erroIdade, setErroIdade] = useState("");
   const [codigoSuporte, setCodigoSuporte] = useState("");
+  const [factos, setFactos] = useState([]);
+  const [factosAbertos, setFactosAbertos] = useState(false);
+
+  useEffect(() => {
+    if (!sessao?.token) return;
+    (async () => {
+      try {
+        const d = await dbGet(sessao.token, "contexto_vida?select=id,facto,criado_em&order=criado_em.desc");
+        setFactos(Array.isArray(d) ? d : []);
+      } catch (e) {}
+    })();
+  }, [sessao]);
+
+  async function apagarFacto(id) {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/contexto_vida?id=eq.${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessao.token}` },
+      });
+      setFactos((f) => f.filter((x) => x.id !== id));
+    } catch (e) {}
+  }
   const [privMsg, setPrivMsg] = useState("");
   const [privOcupado, setPrivOcupado] = useState(false);
 
@@ -1355,6 +1386,24 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
         <button className="priv-btn" onClick={gerarCodigo} disabled={privOcupado}>{L.privCodigoBtn}</button>
         {codigoSuporte && (
           <p className="priv-codigo">{L.privCodigoGerado} <b>{codigoSuporte}</b></p>
+        )}
+        {factos.length > 0 && (
+          <div className="mem-bloco">
+            <button className="priv-btn" onClick={() => setFactosAbertos(!factosAbertos)}>
+              {L.memTitulo} ({factos.length})
+            </button>
+            {factosAbertos && (
+              <div className="mem-lista">
+                <p className="mem-txt">{L.memTxt}</p>
+                {factos.map((f) => (
+                  <div className="mem-item" key={f.id}>
+                    <span>{f.facto}</span>
+                    <button className="mem-x" onClick={() => apagarFacto(f.id)} title={L.memApagar}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
         <button className="priv-btn" onClick={apagarHistorico} disabled={privOcupado}>{L.privApagarHist}</button>
         <button className="priv-btn priv-perigo" onClick={apagarConta} disabled={privOcupado}>{L.privApagarConta}</button>
@@ -2746,6 +2795,13 @@ select.campo { cursor: pointer; }
 .signo-chip.lua { color: #b9c6f0; border-color: rgba(150,170,230,.3); }
 .signo-chip.asc { color: #f0c8a8; border-color: rgba(220,160,110,.3); }
 .astro-nota { display: block; font-size: 11px; color: #948aae; margin-top: 6px; font-style: italic; }
+.mem-bloco { margin-bottom: 9px; }
+.mem-lista { background: rgba(13,10,26,.5); border: 1px solid rgba(150,130,200,.18); border-radius: 11px; padding: 14px 16px; margin-top: 8px; }
+.mem-txt { font-size: 12px; color: #948aae; margin-bottom: 12px; line-height: 1.5; }
+.mem-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; font-size: 13.5px; color: #b8aecb; padding: 8px 0; border-top: 1px solid rgba(150,130,200,.1); }
+.mem-item:first-of-type { border-top: none; }
+.mem-x { background: none; border: none; color: #948aae; font-size: 19px; cursor: pointer; line-height: 1; padding: 0 4px; flex: none; }
+.mem-x:hover { color: #c97a7a; }
 .priv-zona { margin-top: 34px; padding-top: 22px; border-top: 1px solid rgba(150,130,200,.18); }
 .priv-titulo { font-family: 'Cormorant Garamond', serif; font-size: 21px; color: #cdbdf0; margin-bottom: 8px; font-weight: 600; }
 .priv-txt { font-size: 13px; line-height: 1.55; color: #948aae; margin-bottom: 14px; }
