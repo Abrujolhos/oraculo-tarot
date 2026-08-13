@@ -21,6 +21,16 @@ const PT = {
   momento: "Um momento…", criarConta: "Criar conta", sair: "Sair",
   tabLeitura: "✦ Leitura", tabHist: "☾ Histórico", tabRel: "◐ Relatório",
   tabHoroscopo: "♓ Horóscopo",
+  tabMapa: "✧ Mapa Natal",
+  mapaTitulo: "O teu Mapa Natal",
+  mapaSub: "O céu no instante em que nasceste",
+  mapaIntro: "O teu mapa natal é o retrato astrológico único do momento do teu nascimento — os planetas, as casas e os aspetos que moldam quem és. Gera o teu agora.",
+  mapaGerar: "Gerar o meu mapa natal",
+  mapaGerando: "A ler o céu do teu nascimento... isto pode demorar um momento.",
+  mapaSemPerfil: "Preenche a tua data, hora e local de nascimento no perfil para gerar o mapa natal. A hora exata é essencial para as casas e o Ascendente.",
+  mapaErro: "Não foi possível gerar o mapa. Tenta de novo.",
+  mapaTentar: "Tentar de novo",
+  mapaPdf: "Guardar em PDF",
   horoTitulo: "Horóscopo da Semana",
   horoSemanaDe: "Semana de",
   horoCarregar: "A consultar os astros...",
@@ -222,6 +232,10 @@ Sê específico ao que os dados mostram; nunca genérico.`,
 
 const BR = {
   ...PT,
+  mapaTitulo: "Seu Mapa Natal",
+  mapaSub: "O céu no instante em que você nasceu",
+  mapaGerar: "Gerar meu mapa natal",
+  mapaSemPerfil: "Preencha sua data, hora e local de nascimento no perfil para gerar o mapa natal. A hora exata é essencial para as casas e o Ascendente.",
   convTxt: "Compartilhe seu código. Quando um amigo se cadastra e faz a primeira leitura, ambos ganham 14 dias de Pro. Até 30 dias no total.",
   convGerar: "Gerar meu código",
   convCopiar: "Copiar link",
@@ -364,6 +378,16 @@ const EN = {
   momento: "One moment…", criarConta: "Create account", sair: "Sign out",
   tabLeitura: "✦ Reading", tabHist: "☾ History", tabRel: "◐ Report",
   tabHoroscopo: "♓ Horoscope",
+  tabMapa: "✧ Birth Chart",
+  mapaTitulo: "Your Birth Chart",
+  mapaSub: "The sky at the moment you were born",
+  mapaIntro: "Your birth chart is the unique astrological portrait of your moment of birth — the planets, houses and aspects that shape who you are. Generate yours now.",
+  mapaGerar: "Generate my birth chart",
+  mapaGerando: "Reading the sky of your birth... this may take a moment.",
+  mapaSemPerfil: "Fill in your birth date, time and place in your profile to generate the chart. The exact time is essential for the houses and Ascendant.",
+  mapaErro: "Could not generate the chart. Please try again.",
+  mapaTentar: "Try again",
+  mapaPdf: "Save as PDF",
   horoTitulo: "Horoscope of the Week",
   horoSemanaDe: "Week of",
   horoCarregar: "Consulting the stars...",
@@ -1012,6 +1036,169 @@ function Onboarding({ L, onFechar }) {
 
 const SIGNOS_ORDEM = ["Carneiro","Touro","Gémeos","Caranguejo","Leão","Virgem","Balança","Escorpião","Sagitário","Capricórnio","Aquário","Peixes"];
 const SIGNO_SIMBOLO = { "Carneiro":"♈","Touro":"♉","Gémeos":"♊","Caranguejo":"♋","Leão":"♌","Virgem":"♍","Balança":"♎","Escorpião":"♏","Sagitário":"♐","Capricórnio":"♑","Aquário":"♒","Peixes":"♓" };
+
+const SIGNO_GLIFO = { "Carneiro":"♈","Touro":"♉","Gémeos":"♊","Caranguejo":"♋","Leão":"♌","Virgem":"♍","Balança":"♎","Escorpião":"♏","Sagitário":"♐","Capricórnio":"♑","Aquário":"♒","Peixes":"♓" };
+const PLANETA_GLIFO = { "Sol":"☉","Lua":"☾","Mercúrio":"☿","Vénus":"♀","Marte":"♂","Júpiter":"♃","Saturno":"♄","Úrano":"♅","Neptuno":"♆","Plutão":"♇" };
+
+function RodaAstral({ mapa }) {
+  if (!mapa?.planetas) return null;
+  const T = 340, C = T / 2, rExt = 158, rSignos = 140, rCasas = 108, rPlanetas = 88;
+  const ascLon = mapa.asc.lon;
+  // roda gira para pôr o Ascendente à esquerda (leste), como é tradição
+  const ang = (lon) => (180 - (lon - ascLon)) * Math.PI / 180;
+  const pt = (lon, r) => ({ x: C + r * Math.cos(ang(lon)), y: C - r * Math.sin(ang(lon)) });
+
+  const glifosSignos = [];
+  for (let i = 0; i < 12; i++) {
+    const meio = i * 30 + 15;
+    const p = pt(meio, (rSignos + rExt) / 2);
+    glifosSignos.push(<text key={"s"+i} x={p.x} y={p.y} className="roda-glifo-signo" textAnchor="middle" dominantBaseline="central">{SIGNO_GLIFO[SIGNOS_ORDEM[i]]}</text>);
+  }
+  const linhasSignos = [];
+  for (let i = 0; i < 12; i++) {
+    const a = pt(i * 30, rExt), b = pt(i * 30, rCasas);
+    linhasSignos.push(<line key={"ls"+i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} className="roda-linha-signo" />);
+  }
+  // cúspides das casas
+  const linhasCasas = (mapa.casas || []).map((c, i) => {
+    const a = pt(c.lon, rCasas), b = pt(c.lon, rPlanetas - 20);
+    const eixo = (i === 0 || i === 9); // ASC e MC mais fortes
+    return <line key={"lc"+i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} className={eixo ? "roda-eixo" : "roda-linha-casa"} />;
+  });
+  // planetas (com pequeno desvio se muito próximos)
+  const usados = [];
+  const glifosPlanetas = Object.entries(mapa.planetas).map(([nome, p]) => {
+    let lon = p.lon;
+    while (usados.some((u) => Math.abs(u - lon) < 8)) lon += 8;
+    usados.push(lon);
+    const pos = pt(lon, rPlanetas);
+    const posL = pt(lon, rPlanetas - 16);
+    return (
+      <g key={nome}>
+        <text x={pos.x} y={pos.y} className="roda-planeta" textAnchor="middle" dominantBaseline="central">{PLANETA_GLIFO[nome]}</text>
+        <text x={posL.x} y={posL.y} className="roda-planeta-grau" textAnchor="middle" dominantBaseline="central">{Math.floor(p.grau)}°</text>
+      </g>
+    );
+  });
+  // aspetos (linhas centrais)
+  const linhasAspetos = (mapa.aspetos || []).map((a, i) => {
+    const pa = pt(mapa.planetas[a.a].lon, rPlanetas - 22);
+    const pb = pt(mapa.planetas[a.b].lon, rPlanetas - 22);
+    const tenso = a.tipo === "quadratura" || a.tipo === "oposição";
+    return <line key={"a"+i} x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y} className={tenso ? "roda-asp-tenso" : "roda-asp-harm"} />;
+  });
+
+  return (
+    <svg viewBox={`0 0 ${T} ${T}`} className="roda-svg" role="img" aria-label="Roda astrológica">
+      <circle cx={C} cy={C} r={rExt} className="roda-circ" />
+      <circle cx={C} cy={C} r={rSignos} className="roda-circ" />
+      <circle cx={C} cy={C} r={rCasas} className="roda-circ" />
+      <circle cx={C} cy={C} r={rPlanetas - 22} className="roda-circ-int" />
+      {linhasSignos}{glifosSignos}{linhasCasas}{linhasAspetos}{glifosPlanetas}
+    </svg>
+  );
+}
+
+function EcraMapaNatal({ L, sessao, idioma, perfil, ehPro }) {
+  const [estado, setEstado] = useState("inicio"); // inicio | gerando | pronto | erro | semperfil
+  const [mapa, setMapa] = useState(null);
+  const [texto, setTexto] = useState("");
+  const [erro, setErro] = useState("");
+
+  const perfilCompleto = perfil?.data_nascimento && perfil?.hora_nascimento && perfil?.local_nascimento;
+
+  useEffect(() => {
+    // tentar carregar mapa já guardado
+    (async () => {
+      try {
+        const idi = idioma === "en" ? "en" : idioma === "pt-BR" ? "pt-BR" : "pt-PT";
+        const d = await dbGet(sessao.token, `mapas_natais?select=dados_astro,interpretacao&idioma=eq.${idi}&limit=1`);
+        if (Array.isArray(d) && d.length && d[0].interpretacao) {
+          setMapa(d[0].dados_astro); setTexto(d[0].interpretacao); setEstado("pronto");
+        }
+      } catch (e) {}
+    })();
+  }, [sessao, idioma]);
+
+  async function gerar() {
+    if (!perfilCompleto) { setEstado("semperfil"); return; }
+    setEstado("gerando"); setErro("");
+    try {
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/mapa-natal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessao.token}` },
+        body: JSON.stringify({ idioma }),
+      });
+      const d = await r.json();
+      if (!r.ok) { setErro(d?.error || L.mapaErro); setEstado("erro"); return; }
+      setMapa(d.mapa); setTexto(d.interpretacao); setEstado("pronto");
+    } catch (e) { setErro(L.mapaErro); setEstado("erro"); }
+  }
+
+  const seccoes = texto ? texto.split(/^## /m).filter(Boolean) : [];
+
+  return (
+    <div className="mapa-wrap">
+      <div className="mapa-cabeca">
+        <h2 className="mapa-titulo">{L.mapaTitulo}</h2>
+        <p className="mapa-sub">{L.mapaSub}</p>
+      </div>
+
+      {estado === "inicio" && (
+        <div className="mapa-inicio">
+          <div className="mapa-simbolo">✧</div>
+          <p className="mapa-intro">{L.mapaIntro}</p>
+          <button className="cta" onClick={gerar}>{L.mapaGerar}</button>
+        </div>
+      )}
+
+      {estado === "semperfil" && (
+        <div className="mapa-inicio">
+          <p className="mapa-intro">{L.mapaSemPerfil}</p>
+        </div>
+      )}
+
+      {estado === "gerando" && (
+        <div className="mapa-inicio">
+          <div className="mapa-simbolo a-girar">✧</div>
+          <p className="mapa-intro">{L.mapaGerando}</p>
+        </div>
+      )}
+
+      {estado === "erro" && (
+        <div className="mapa-inicio">
+          <p className="mapa-erro">{erro}</p>
+          <button className="cta" onClick={gerar}>{L.mapaTentar}</button>
+        </div>
+      )}
+
+      {estado === "pronto" && mapa && (
+        <div className="mapa-conteudo" id="mapa-para-pdf">
+          <RodaAstral mapa={mapa} />
+          <div className="mapa-tres">
+            <div className="mapa-chip"><span className="mapa-chip-g">☉</span> {mapa.planetas?.Sol?.signo}</div>
+            <div className="mapa-chip"><span className="mapa-chip-g">☾</span> {mapa.planetas?.Lua?.signo}</div>
+            <div className="mapa-chip"><span className="mapa-chip-g">↑</span> {mapa.asc?.signo}</div>
+          </div>
+          <div className="mapa-texto">
+            {seccoes.map((s, i) => {
+              const nl = s.indexOf("\n");
+              const titulo = nl > 0 ? s.slice(0, nl).trim() : "";
+              const corpo = nl > 0 ? s.slice(nl).trim() : s.trim();
+              return (
+                <div key={i} className="mapa-seccao">
+                  {titulo && <h3 className="mapa-h3">{titulo}</h3>}
+                  {corpo.split("\n\n").map((par, j) => <p key={j} className="mapa-par">{par}</p>)}
+                </div>
+              );
+            })}
+          </div>
+          <button className="mapa-pdf-btn" onClick={() => window.print()}>{L.mapaPdf}</button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function EcraHoroscopo({ L, sessao, idioma, signo }) {
   const [horoscopos, setHoroscopos] = useState(null);
@@ -2134,6 +2321,7 @@ ${L.pInstr}`;
               {L.tabRel}{!ehPro ? " 🔒" : ""}
             </button>
             <button role="tab" className={`tab ${vista === "horoscopo" ? "ativo" : ""}`} onClick={() => irPara("horoscopo")}>{L.tabHoroscopo}</button>
+            <button role="tab" className={`tab ${vista === "mapa" ? "ativo" : ""}`} onClick={() => irPara("mapa")}>{L.tabMapa}{!ehPro ? " 🔒" : ""}</button>
             <button role="tab" className={`tab ${vista === "perfil" ? "ativo" : ""}`} onClick={() => irPara("perfil")}>{L.tabPerfil}</button>
           </nav>
 
@@ -2141,6 +2329,10 @@ ${L.pInstr}`;
 
           {vista === "horoscopo" && (
             <EcraHoroscopo L={L} sessao={sessao} idioma={idioma} signo={perfil?.signo} />
+          )}
+
+          {vista === "mapa" && (
+            <EcraMapaNatal L={L} sessao={sessao} idioma={idioma} perfil={perfil} ehPro={ehPro} />
           )}
 
           {vista === "perfil" && (
@@ -2547,6 +2739,35 @@ const css = `
 }
 @keyframes cadente { 0%, 96% { opacity: 0; transform: rotate(-28deg) translateX(0); } 97% { opacity: .9; } 100% { opacity: 0; transform: rotate(-28deg) translateX(220px); } }
 
+.mapa-wrap { max-width: 640px; margin: 0 auto; }
+.mapa-cabeca { text-align: center; margin-bottom: 24px; }
+.mapa-titulo { font-family: 'Cormorant Garamond', serif; font-size: 28px; color: #e8c87e; margin-bottom: 4px; }
+.mapa-sub { font-size: 13px; color: #948aae; }
+.mapa-inicio { text-align: center; padding: 40px 20px; }
+.mapa-simbolo { font-size: 54px; color: #c9a35c; margin-bottom: 20px; }
+.mapa-simbolo.a-girar { animation: girar 3s linear infinite; }
+@keyframes girar { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+.mapa-intro { font-size: 15px; color: #b8aecb; line-height: 1.6; max-width: 400px; margin: 0 auto 24px; }
+.mapa-erro { font-size: 14px; color: #c97a7a; margin-bottom: 18px; }
+.roda-svg { width: 100%; max-width: 340px; display: block; margin: 0 auto 20px; }
+.roda-circ { fill: none; stroke: rgba(201,163,92,.25); stroke-width: 1; }
+.roda-circ-int { fill: none; stroke: rgba(150,130,200,.12); stroke-width: 1; }
+.roda-linha-signo { stroke: rgba(201,163,92,.18); stroke-width: 1; }
+.roda-linha-casa { stroke: rgba(150,130,200,.14); stroke-width: .8; }
+.roda-eixo { stroke: rgba(201,163,92,.6); stroke-width: 1.5; }
+.roda-glifo-signo { fill: #c9a35c; font-size: 15px; }
+.roda-planeta { fill: #e9e3f2; font-size: 15px; }
+.roda-planeta-grau { fill: #948aae; font-size: 7px; }
+.roda-asp-harm { stroke: rgba(120,160,200,.3); stroke-width: .7; }
+.roda-asp-tenso { stroke: rgba(200,120,120,.28); stroke-width: .7; }
+.mapa-tres { display: flex; justify-content: center; gap: 12px; margin-bottom: 26px; }
+.mapa-chip { background: rgba(30,22,54,.5); border: 1px solid rgba(201,163,92,.28); border-radius: 20px; padding: 7px 15px; font-size: 13.5px; color: #cdbdf0; }
+.mapa-chip-g { color: #e8c87e; margin-right: 4px; }
+.mapa-seccao { margin-bottom: 24px; }
+.mapa-h3 { font-family: 'Cormorant Garamond', serif; font-size: 21px; color: #e8c87e; margin-bottom: 10px; }
+.mapa-par { font-size: 15px; line-height: 1.7; color: #cdbdf0; margin-bottom: 12px; }
+.mapa-pdf-btn { display: block; margin: 30px auto 0; background: rgba(201,163,92,.14); color: #e6c885; border: 1px solid rgba(201,163,92,.4); border-radius: 11px; padding: 12px 26px; font-size: 14px; cursor: pointer; }
+@media print { .tabs, .topo, .mapa-pdf-btn, .mapa-cabeca { display: none !important; } .mapa-par, .mapa-h3 { color: #1a1330 !important; } body { background: #fff !important; } }
 .horo-wrap { max-width: 640px; margin: 0 auto; }
 .horo-cabeca { text-align: center; margin-bottom: 22px; }
 .horo-titulo { font-family: 'Cormorant Garamond', serif; font-size: 27px; color: #e8c87e; margin-bottom: 4px; }
