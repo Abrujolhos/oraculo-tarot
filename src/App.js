@@ -15,7 +15,7 @@ const PT = {
   bemVindo: "Bem-vindo de volta", criaConta: "Cria a tua conta",
   authSub: "As tuas leituras, só tuas, em segurança.",
   entrar: "Entrar", registar: "Registar", nomePH: "O teu nome",
-  passPH: "Palavra-passe (mín. 6 caracteres)",
+  passVer: "Mostrar palavra-passe", passOcultar: "Ocultar palavra-passe", passPH: "Palavra-passe (mín. 6 caracteres)",
   preenche: "Preenche o email e a palavra-passe.",
   contaCriada: "Conta criada! Verifica o teu email para confirmar e depois entra.",
   momento: "Um momento…", criarConta: "Criar conta", sair: "Sair",
@@ -271,7 +271,7 @@ const BR = {
   sub: "Seu baralho, sempre com você",
   bemVindo: "Bem-vindo de volta", criaConta: "Crie sua conta",
   authSub: "Suas leituras, só suas, em segurança.",
-  nomePH: "Seu nome", passPH: "Senha (mín. 6 caracteres)",
+  nomePH: "Seu nome", passVer: "Mostrar senha", passOcultar: "Ocultar senha", passPH: "Senha (mín. 6 caracteres)",
   preenche: "Preencha o email e a senha.",
   contaCriada: "Conta criada! Verifique seu email para confirmar e depois entre.",
   perguntaPH: "Ex.: Devo avançar com o novo projeto este mês?",
@@ -338,7 +338,7 @@ const EN = {
   bemVindo: "Welcome back", criaConta: "Create your account",
   authSub: "Your readings, yours alone, kept safe.",
   entrar: "Sign in", registar: "Sign up", nomePH: "Your name",
-  passPH: "Password (min. 6 characters)",
+  passVer: "Show password", passOcultar: "Hide password", passPH: "Password (min. 6 characters)",
   preenche: "Please fill in email and password.",
   contaCriada: "Account created! Check your email to confirm, then sign in.",
   momento: "One moment…", criarConta: "Create account", sair: "Sign out",
@@ -1054,6 +1054,7 @@ function EcraAuth({ onSessao, L }) {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [verPass, setVerPass] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [msg, setMsg] = useState(null);
 
@@ -1089,9 +1090,13 @@ function EcraAuth({ onSessao, L }) {
         )}
         <input className="campo" type="email" placeholder="Email" value={email}
           onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
-        <input className="campo" type="password" placeholder={L.passPH} value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && submeter()} autoComplete="current-password" />
+        <div className="campo-pass">
+          <input className="campo" type={verPass ? "text" : "password"} placeholder={L.passPH} value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submeter()} autoComplete="current-password" />
+          <button type="button" className="olho" onClick={() => setVerPass(!verPass)}
+            aria-label={verPass ? L.passOcultar : L.passVer}>{verPass ? "🙈" : "👁"}</button>
+        </div>
         {msg && <p className={`auth-msg ${msg.tipo}`}>{msg.txt}</p>}
         <button className="cta" onClick={submeter} disabled={ocupado}>
           {ocupado ? L.momento : modo === "entrar" ? L.entrar : L.criarConta}
@@ -2420,6 +2425,11 @@ const css = `
   box-shadow: 0 4px 16px rgba(201,163,92,.35);
 }
 
+.campo-pass { position: relative; }
+.campo-pass .campo { width: 100%; padding-right: 46px; }
+.olho { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none;
+  font-size: 17px; cursor: pointer; padding: 6px 8px; opacity: .7; transition: opacity .2s; }
+.olho:hover { opacity: 1; }
 .campo {
   width: 100%; background: rgba(30,24,48,.7); color: #ece4d4;
   border: 1px solid rgba(201,163,92,.3); border-radius: 10px;
