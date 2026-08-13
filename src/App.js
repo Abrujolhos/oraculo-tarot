@@ -136,6 +136,8 @@ const PT = {
   obSeguinte: "Seguinte",
   obComecar: "Começar",
   obSaltar: "Saltar",
+  ajudaTiragem: "Uma tiragem é a forma como as cartas são dispostas. Cada posição tem um significado — quanto mais cartas, mais profunda e detalhada a leitura.",
+  ajudaAstro: "☉ Sol: a tua essência e vontade. ☾ Lua: o teu mundo emocional. ↑ Ascendente: a forma como abordas o mundo. O Oráculo cruza os três com as cartas para uma leitura só tua.",
   convTitulo: "Convida e ganha Pro",
   convTxt: "Partilha o teu código. Quando um amigo se regista e faz a primeira leitura, ganham ambos 14 dias de Pro. Até 30 dias no total.",
   convGerar: "Gerar o meu código",
@@ -477,6 +479,8 @@ const EN = {
   obSeguinte: "Next",
   obComecar: "Begin",
   obSaltar: "Skip",
+  ajudaTiragem: "A spread is how the cards are laid out. Each position has a meaning — more cards means a deeper, more detailed reading.",
+  ajudaAstro: "☉ Sun: your essence and will. ☾ Moon: your emotional world. ↑ Rising: how you approach the world. Oráculo crosses all three with the cards for a reading that's uniquely yours.",
   convTitulo: "Invite & earn Pro",
   convTxt: "Share your code. When a friend signs up and does their first reading, you both get 14 days of Pro. Up to 30 days total.",
   convGerar: "Generate my code",
@@ -1288,6 +1292,21 @@ function ItemHistorico({ leitura, onAtualizar, onApagar, L }) {
 
 /* ─────────── PERFIL ─────────── */
 
+function Ajuda({ texto }) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <span className="ajuda-wrap">
+      <button type="button" className="ajuda-btn" onClick={() => setAberto(!aberto)} aria-label="Ajuda">?</button>
+      {aberto && (
+        <>
+          <span className="ajuda-fundo" onClick={() => setAberto(false)} />
+          <span className="ajuda-balao" role="tooltip">{texto}</span>
+        </>
+      )}
+    </span>
+  );
+}
+
 function SeccaoConvites({ L, sessao, codigoInicial }) {
   const [codigo, setCodigo] = useState(codigoInicial || "");
   const [convites, setConvites] = useState(null);
@@ -1492,6 +1511,7 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
         {signoMostra && <span className="signo-chip">☉ {signoMostra}</span>}
         {luaCalc && <span className="signo-chip lua">☾ {traduzSigno(luaCalc.signo)}{luaCalc.aprox ? "*" : ""}</span>}
         {ascCalc && <span className="signo-chip asc">↑ {traduzSigno(ascCalc)}</span>}
+        {(signoMostra || luaCalc) && <Ajuda texto={L.ajudaAstro} />}
         {luaCalc?.aprox && <span className="astro-nota">{L.astroNota}</span>}
       </div>
 
@@ -2170,7 +2190,7 @@ ${L.pInstr}`;
               </section>
 
               <section>
-                <div className="rotulo">{L.tiragemLbl}</div>
+                <div className="rotulo">{L.tiragemLbl} <Ajuda texto={L.ajudaTiragem} /></div>
                 <div className="tiragens">
                   {TIRAGENS.map((t, i) => (
                     <button key={t.id} className={`tiragem ${tiragemIdx === i ? "ativo" : ""}`} onClick={() => setTiragemIdx(i)}>
@@ -3003,6 +3023,10 @@ select.campo { cursor: pointer; }
 .mem-item:first-of-type { border-top: none; }
 .mem-x { background: none; border: none; color: #948aae; font-size: 19px; cursor: pointer; line-height: 1; padding: 0 4px; flex: none; }
 .mem-x:hover { color: #c97a7a; }
+.ajuda-wrap { position: relative; display: inline-flex; vertical-align: middle; }
+.ajuda-btn { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(201,163,92,.5); background: rgba(201,163,92,.12); color: #e6c885; font-size: 11px; line-height: 1; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+.ajuda-fundo { position: fixed; inset: 0; z-index: 40; }
+.ajuda-balao { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 41; width: 230px; background: #1a1330; border: 1px solid rgba(201,163,92,.35); border-radius: 10px; padding: 12px 14px; font-size: 12.5px; line-height: 1.5; color: #cdbdf0; box-shadow: 0 8px 28px rgba(0,0,0,.4); text-align: left; font-weight: 400; }
 .conv-zona { margin-top: 34px; padding-top: 22px; border-top: 1px solid rgba(150,130,200,.18); }
 .conv-titulo { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #e8c87e; margin-bottom: 6px; }
 .conv-txt { font-size: 13px; color: #948aae; line-height: 1.55; margin-bottom: 14px; }
