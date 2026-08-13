@@ -136,6 +136,13 @@ const PT = {
   obSeguinte: "Seguinte",
   obComecar: "Começar",
   obSaltar: "Saltar",
+  convTitulo: "Convida e ganha Pro",
+  convTxt: "Partilha o teu código. Quando um amigo se regista e faz a primeira leitura, ganham ambos 14 dias de Pro. Até 30 dias no total.",
+  convGerar: "Gerar o meu código",
+  convCopiar: "Copiar link",
+  convCopiado: "Copiado!",
+  convJa: "Convites com recompensa:",
+  convMax: "máx. 30 dias de Pro",
   memTitulo: "O que o Oráculo sabe sobre ti",
   memTxt: "Factos recolhidos das tuas conversas, usados para tornar as leituras mais pertinentes. Apaga o que não quiseres guardar.",
   memApagar: "Apagar este facto",
@@ -213,6 +220,9 @@ Sê específico ao que os dados mostram; nunca genérico.`,
 
 const BR = {
   ...PT,
+  convTxt: "Compartilhe seu código. Quando um amigo se cadastra e faz a primeira leitura, ambos ganham 14 dias de Pro. Até 30 dias no total.",
+  convGerar: "Gerar meu código",
+  convCopiar: "Copiar link",
   horoTitulo: "Horóscopo da Semana",
   horoCarregar: "Consultando os astros...",
   horoBreve: "O horóscopo desta semana está sendo preparado. Volte em breve.",
@@ -467,6 +477,13 @@ const EN = {
   obSeguinte: "Next",
   obComecar: "Begin",
   obSaltar: "Skip",
+  convTitulo: "Invite & earn Pro",
+  convTxt: "Share your code. When a friend signs up and does their first reading, you both get 14 days of Pro. Up to 30 days total.",
+  convGerar: "Generate my code",
+  convCopiar: "Copy link",
+  convCopiado: "Copied!",
+  convJa: "Rewarded invites:",
+  convMax: "max. 30 days of Pro",
   memTitulo: "What Oráculo knows about you",
   memTxt: "Facts gathered from your conversations, used to make readings more relevant. Delete anything you'd rather not keep.",
   memApagar: "Delete this fact",
@@ -1145,6 +1162,17 @@ function EcraAuth({ onSessao, L }) {
     try {
       if (modo === "registar") {
         const d = await authRegistar(email.trim(), password, nome.trim());
+        // Se veio com código de convite no link, regista-o
+        const codConvite = new URLSearchParams(window.location.search).get("convite");
+        if (codConvite && d.session) {
+          try {
+            await fetch(`${SUPABASE_URL}/rest/v1/rpc/registar_convite`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${d.session.access_token}` },
+              body: JSON.stringify({ p_convidado: d.session.user.id, p_codigo: codConvite }),
+            });
+          } catch (e) { /* não bloquear o registo */ }
+        }
         if (d.session) onSessao({ token: d.session.access_token, user: d.session.user });
         else { setMsg({ tipo: "info", txt: L.contaCriada }); setModo("entrar"); }
       } else {
@@ -1259,6 +1287,61 @@ function ItemHistorico({ leitura, onAtualizar, onApagar, L }) {
 }
 
 /* ─────────── PERFIL ─────────── */
+
+function SeccaoConvites({ L, sessao, codigoInicial }) {
+  const [codigo, setCodigo] = useState(codigoInicial || "");
+  const [convites, setConvites] = useState(null);
+  const [gerando, setGerando] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const c = await dbGet(sessao.token, "convites?select=recompensado&convidante_id=eq." + sessao.user.id);
+        setConvites(Array.isArray(c) ? c : []);
+      } catch (e) { setConvites([]); }
+    })();
+  }, [sessao]);
+
+  async function gerarCodigo() {
+    setGerando(true);
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/gerar_codigo_convite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessao.token}` },
+        body: JSON.stringify({ p_user: sessao.user.id }),
+      });
+      const novo = await r.json();
+      if (typeof novo === "string") setCodigo(novo);
+    } catch (e) {}
+    setGerando(false);
+  }
+
+  const link = codigo ? `https://oraculo-tarot-seven.vercel.app/?convite=${codigo}` : "";
+  const recompensados = convites ? convites.filter((c) => c.recompensado).length : 0;
+
+  async function copiar() {
+    try { await navigator.clipboard.writeText(link); setCopiado(true); setTimeout(() => setCopiado(false), 2000); } catch (e) {}
+  }
+
+  return (
+    <div className="conv-zona">
+      <h3 className="conv-titulo">{L.convTitulo}</h3>
+      <p className="conv-txt">{L.convTxt}</p>
+      {!codigo ? (
+        <button className="conv-btn" onClick={gerarCodigo} disabled={gerando}>{gerando ? "..." : L.convGerar}</button>
+      ) : (
+        <>
+          <div className="conv-codigo-cx">
+            <span className="conv-codigo">{codigo}</span>
+            <button className="conv-copiar" onClick={copiar}>{copiado ? L.convCopiado : L.convCopiar}</button>
+          </div>
+          <p className="conv-contador">{L.convJa} {recompensados}/3 · {L.convMax}</p>
+        </>
+      )}
+    </div>
+  );
+}
 
 function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMarketing, onConsent, onSair }) {
   const [nome, setNome] = useState(perfil?.nome || "");
@@ -1466,6 +1549,8 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
         {guardado ? L.perfilGuardado : ocupado ? L.aGuardar : L.perfilGuardar}
       </button>
 
+      <SeccaoConvites L={L} sessao={sessao} codigoInicial={perfil?.codigo_convite} />
+
       <div className="priv-zona">
         <h3 className="priv-titulo">{L.privTitulo}</h3>
         <p className="priv-txt">{L.privCodigoTxt}</p>
@@ -1549,7 +1634,7 @@ export default function TarotApp() {
 
   const [sessao, setSessao] = useState(null);
   const [perfil, setPerfil] = useState(null);
-  const ehPro = perfil?.plano === "pro";
+  const ehPro = perfil?.plano === "pro" || (perfil?.pro_ate && new Date(perfil.pro_ate) > new Date());
 
   const [vista, setVista] = useState("nova"); // nova | historico | relatorio | pro
   const [mostrarOnboarding, setMostrarOnboarding] = useState(false);
@@ -1628,13 +1713,14 @@ export default function TarotApp() {
     setACarregar(true);
     (async () => {
       try {
-        const p = await dbGet(sessao.token, "profiles?select=plano,nome,data_nascimento,hora_nascimento,local_nascimento,signo,genero,profissao");
+        const p = await dbGet(sessao.token, "profiles?select=plano,nome,data_nascimento,hora_nascimento,local_nascimento,signo,genero,profissao,pro_ate,codigo_convite");
         setPerfil(p[0] || null);
         try {
           const cons = await dbGet(sessao.token, "consentimentos?finalidade=eq.marketing_kairos&select=concedido");
           setConsentMarketing(!!cons[0]?.concedido);
         } catch { /* sem consentimento ainda */ }
-        if (p[0]?.plano === "pro") {
+        const proAtivo = p[0]?.plano === "pro" || (p[0]?.pro_ate && new Date(p[0].pro_ate) > new Date());
+        if (proAtivo) {
           const ls = await dbGet(sessao.token, "leituras?select=*&order=data.desc");
           setLeituras(ls);
         } else {
@@ -2917,6 +3003,14 @@ select.campo { cursor: pointer; }
 .mem-item:first-of-type { border-top: none; }
 .mem-x { background: none; border: none; color: #948aae; font-size: 19px; cursor: pointer; line-height: 1; padding: 0 4px; flex: none; }
 .mem-x:hover { color: #c97a7a; }
+.conv-zona { margin-top: 34px; padding-top: 22px; border-top: 1px solid rgba(150,130,200,.18); }
+.conv-titulo { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #e8c87e; margin-bottom: 6px; }
+.conv-txt { font-size: 13px; color: #948aae; line-height: 1.55; margin-bottom: 14px; }
+.conv-btn { background: linear-gradient(180deg, #e6c885, #c9a35c); color: #1a1330; border: none; border-radius: 10px; padding: 11px 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.conv-codigo-cx { display: flex; align-items: center; gap: 10px; background: rgba(13,10,26,.5); border: 1px solid rgba(201,163,92,.3); border-radius: 11px; padding: 12px 16px; margin-bottom: 10px; }
+.conv-codigo { font-family: 'Cormorant Garamond', serif; font-size: 24px; letter-spacing: 3px; color: #e8c87e; flex: 1; }
+.conv-copiar { background: rgba(201,163,92,.15); color: #e6c885; border: 1px solid rgba(201,163,92,.35); border-radius: 8px; padding: 8px 14px; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+.conv-contador { font-size: 12px; color: #948aae; }
 .priv-zona { margin-top: 34px; padding-top: 22px; border-top: 1px solid rgba(150,130,200,.18); }
 .priv-titulo { font-family: 'Cormorant Garamond', serif; font-size: 21px; color: #cdbdf0; margin-bottom: 8px; font-weight: 600; }
 .priv-txt { font-size: 13px; line-height: 1.55; color: #948aae; margin-bottom: 14px; }
