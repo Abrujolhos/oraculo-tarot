@@ -22,6 +22,16 @@ const PT = {
   tabLeitura: "✦ Leitura", tabHist: "☾ Histórico", tabRel: "◐ Relatório",
   tabHoroscopo: "♓ Horóscopo",
   tabMapa: "✧ Mapa Natal",
+  tabPrevisao: "☉ Previsão Anual",
+  prevTitulo: "Previsão para",
+  prevSub: "O teu ano astrológico, de aniversário a aniversário",
+  prevIntro: "A tua previsão anual lê o céu do teu próximo ciclo solar — os grandes movimentos, as oportunidades e os desafios do ano que se abre no teu aniversário.",
+  prevGerar: "Gerar a minha previsão",
+  prevGerando: "A ler o céu do teu ano... um momento.",
+  prevComprar: "A Previsão Anual é um extra que podes adquirir. Revela tudo o que o teu próximo ano astrológico traz.",
+  prevVerPlanos: "Ver como adquirir",
+  prevRevolucao: "Revolução solar a",
+  privExportar: "Extrair os meus dados",
   mapaTitulo: "O teu Mapa Natal",
   mapaSub: "O céu no instante em que nasceste",
   mapaIntro: "O teu mapa natal é o retrato astrológico único do momento do teu nascimento — os planetas, as casas e os aspetos que moldam quem és. Gera o teu agora.",
@@ -232,6 +242,9 @@ Sê específico ao que os dados mostram; nunca genérico.`,
 
 const BR = {
   ...PT,
+  prevSub: "Seu ano astrológico, de aniversário a aniversário",
+  prevGerar: "Gerar minha previsão",
+  privExportar: "Extrair meus dados",
   mapaTitulo: "Seu Mapa Natal",
   mapaSub: "O céu no instante em que você nasceu",
   mapaGerar: "Gerar meu mapa natal",
@@ -379,6 +392,16 @@ const EN = {
   tabLeitura: "✦ Reading", tabHist: "☾ History", tabRel: "◐ Report",
   tabHoroscopo: "♓ Horoscope",
   tabMapa: "✧ Birth Chart",
+  tabPrevisao: "☉ Yearly Forecast",
+  prevTitulo: "Forecast for",
+  prevSub: "Your astrological year, birthday to birthday",
+  prevIntro: "Your yearly forecast reads the sky of your next solar cycle — the major movements, opportunities and challenges of the year that opens on your birthday.",
+  prevGerar: "Generate my forecast",
+  prevGerando: "Reading the sky of your year... one moment.",
+  prevComprar: "The Yearly Forecast is an add-on you can purchase. It reveals everything your next astrological year holds.",
+  prevVerPlanos: "See how to get it",
+  prevRevolucao: "Solar return on",
+  privExportar: "Export my data",
   mapaTitulo: "Your Birth Chart",
   mapaSub: "The sky at the moment you were born",
   mapaIntro: "Your birth chart is the unique astrological portrait of your moment of birth — the planets, houses and aspects that shape who you are. Generate yours now.",
@@ -1039,6 +1062,7 @@ const SIGNO_SIMBOLO = { "Carneiro":"♈","Touro":"♉","Gémeos":"♊","Carangue
 
 const SIGNO_GLIFO = { "Carneiro":"♈","Touro":"♉","Gémeos":"♊","Caranguejo":"♋","Leão":"♌","Virgem":"♍","Balança":"♎","Escorpião":"♏","Sagitário":"♐","Capricórnio":"♑","Aquário":"♒","Peixes":"♓" };
 const PLANETA_GLIFO = { "Sol":"☉","Lua":"☾","Mercúrio":"☿","Vénus":"♀","Marte":"♂","Júpiter":"♃","Saturno":"♄","Úrano":"♅","Neptuno":"♆","Plutão":"♇" };
+const NODO_GLIFO = "☊";
 
 function RodaAstral({ mapa }) {
   if (!mapa?.planetas) return null;
@@ -1088,14 +1112,117 @@ function RodaAstral({ mapa }) {
     return <line key={"a"+i} x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y} className={tenso ? "roda-asp-tenso" : "roda-asp-harm"} />;
   });
 
+  const glifoNodo = mapa.nodo ? (() => {
+    const pos = pt(mapa.nodo.lon, rPlanetas);
+    return <text x={pos.x} y={pos.y} className="roda-nodo" textAnchor="middle" dominantBaseline="central">{NODO_GLIFO}</text>;
+  })() : null;
+
   return (
     <svg viewBox={`0 0 ${T} ${T}`} className="roda-svg" role="img" aria-label="Roda astrológica">
       <circle cx={C} cy={C} r={rExt} className="roda-circ" />
       <circle cx={C} cy={C} r={rSignos} className="roda-circ" />
       <circle cx={C} cy={C} r={rCasas} className="roda-circ" />
       <circle cx={C} cy={C} r={rPlanetas - 22} className="roda-circ-int" />
-      {linhasSignos}{glifosSignos}{linhasCasas}{linhasAspetos}{glifosPlanetas}
+      {linhasSignos}{glifosSignos}{linhasCasas}{linhasAspetos}{glifosPlanetas}{glifoNodo}
     </svg>
+  );
+}
+
+function EcraPrevisaoAnual({ L, sessao, idioma, perfil }) {
+  const [estado, setEstado] = useState("inicio");
+  const [texto, setTexto] = useState("");
+  const [dados, setDados] = useState(null);
+  const [erro, setErro] = useState("");
+  const ano = new Date().getFullYear();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const idi = idioma === "en" ? "en" : idioma === "pt-BR" ? "pt-BR" : "pt-PT";
+        const d = await dbGet(sessao.token, `previsoes_anuais?select=dados_astro,interpretacao&idioma=eq.${idi}&order=criado_em.desc&limit=1`);
+        if (Array.isArray(d) && d.length && d[0].interpretacao) {
+          setDados(d[0].dados_astro); setTexto(d[0].interpretacao); setEstado("pronto");
+        }
+      } catch (e) {}
+    })();
+  }, [sessao, idioma]);
+
+  async function gerar() {
+    setEstado("gerando"); setErro("");
+    try {
+      const r = await fetch(`${SUPABASE_URL}/functions/v1/previsao-anual`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessao.token}` },
+        body: JSON.stringify({ idioma, ano }),
+      });
+      const d = await r.json();
+      if (!r.ok) {
+        if (d?.codigo === "compra_necessaria") { setEstado("comprar"); return; }
+        setErro(d?.error || L.mapaErro); setEstado("erro"); return;
+      }
+      setDados(d.previsao); setTexto(d.interpretacao); setEstado("pronto");
+    } catch (e) { setErro(L.mapaErro); setEstado("erro"); }
+  }
+
+  const seccoes = texto ? texto.split(/^## /m).filter(Boolean) : [];
+
+  return (
+    <div className="mapa-wrap">
+      <div className="mapa-cabeca">
+        <h2 className="mapa-titulo">{L.prevTitulo} {ano}</h2>
+        <p className="mapa-sub">{L.prevSub}</p>
+      </div>
+
+      {estado === "inicio" && (
+        <div className="mapa-inicio">
+          <div className="mapa-simbolo">☉</div>
+          <p className="mapa-intro">{L.prevIntro}</p>
+          <button className="cta" onClick={gerar}>{L.prevGerar}</button>
+        </div>
+      )}
+
+      {estado === "comprar" && (
+        <div className="mapa-inicio">
+          <div className="mapa-simbolo">☉</div>
+          <p className="mapa-intro">{L.prevComprar}</p>
+          <button className="cta" onClick={() => window.dispatchEvent(new CustomEvent("ir-pro"))}>{L.prevVerPlanos}</button>
+        </div>
+      )}
+
+      {estado === "gerando" && (
+        <div className="mapa-inicio">
+          <div className="mapa-simbolo a-girar">☉</div>
+          <p className="mapa-intro">{L.prevGerando}</p>
+        </div>
+      )}
+
+      {estado === "erro" && (
+        <div className="mapa-inicio">
+          <p className="mapa-erro">{erro}</p>
+          <button className="cta" onClick={gerar}>{L.mapaTentar}</button>
+        </div>
+      )}
+
+      {estado === "pronto" && (
+        <div className="mapa-conteudo">
+          {dados?.revolucao_solar && <p className="prev-data">{L.prevRevolucao} {new Date(dados.revolucao_solar).toLocaleDateString(idioma === "en" ? "en-GB" : "pt-PT", { day: "numeric", month: "long", year: "numeric" })}</p>}
+          <div className="mapa-texto">
+            {seccoes.map((s, i) => {
+              const nl = s.indexOf("\n");
+              const titulo = nl > 0 ? s.slice(0, nl).trim() : "";
+              const corpo = nl > 0 ? s.slice(nl).trim() : s.trim();
+              return (
+                <div key={i} className="mapa-seccao">
+                  {titulo && <h3 className="mapa-h3">{titulo}</h3>}
+                  {corpo.split("\n\n").map((par, j) => <p key={j} className="mapa-par">{par}</p>)}
+                </div>
+              );
+            })}
+          </div>
+          <button className="mapa-pdf-btn" onClick={() => window.print()}>{L.mapaPdf}</button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1179,6 +1306,7 @@ function EcraMapaNatal({ L, sessao, idioma, perfil, ehPro }) {
             <div className="mapa-chip"><span className="mapa-chip-g">☉</span> {mapa.planetas?.Sol?.signo}</div>
             <div className="mapa-chip"><span className="mapa-chip-g">☾</span> {mapa.planetas?.Lua?.signo}</div>
             <div className="mapa-chip"><span className="mapa-chip-g">↑</span> {mapa.asc?.signo}</div>
+            {mapa.nodo && <div className="mapa-chip"><span className="mapa-chip-g">☊</span> {mapa.nodo.signo}</div>}
           </div>
           <div className="mapa-texto">
             {seccoes.map((s, i) => {
@@ -1604,6 +1732,25 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
     setPrivOcupado(false);
   }
 
+  async function exportarDados() {
+    setPrivOcupado(true);
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/exportar_meus_dados`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessao.token}` },
+        body: JSON.stringify({}),
+      });
+      const dados = await r.json();
+      const blob = new Blob([JSON.stringify(dados, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `oraculo-os-meus-dados-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {}
+    setPrivOcupado(false);
+  }
+
   async function apagarHistorico() {
     if (!window.confirm(L.privApagarHistConf)) return;
     setPrivOcupado(true); setPrivMsg("");
@@ -1783,6 +1930,7 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
             )}
           </div>
         )}
+        <button className="priv-btn" onClick={exportarDados} disabled={privOcupado}>{L.privExportar}</button>
         <button className="priv-btn" onClick={apagarHistorico} disabled={privOcupado}>{L.privApagarHist}</button>
         <button className="priv-btn priv-perigo" onClick={apagarConta} disabled={privOcupado}>{L.privApagarConta}</button>
         {privMsg && <p className="priv-msg">{privMsg}</p>}
@@ -2277,7 +2425,9 @@ ${L.pInstr}`;
       else setVista("nova");
     };
     window.addEventListener("popstate", aoVoltar);
-    return () => window.removeEventListener("popstate", aoVoltar);
+    const irProHandler = () => irPara("pro");
+    window.addEventListener("ir-pro", irProHandler);
+    return () => { window.removeEventListener("popstate", aoVoltar); window.removeEventListener("ir-pro", irProHandler); };
   }, []);
 
   return (
@@ -2322,6 +2472,7 @@ ${L.pInstr}`;
             </button>
             <button role="tab" className={`tab ${vista === "horoscopo" ? "ativo" : ""}`} onClick={() => irPara("horoscopo")}>{L.tabHoroscopo}</button>
             <button role="tab" className={`tab ${vista === "mapa" ? "ativo" : ""}`} onClick={() => irPara("mapa")}>{L.tabMapa}{!ehPro ? " 🔒" : ""}</button>
+            <button role="tab" className={`tab ${vista === "previsao" ? "ativo" : ""}`} onClick={() => irPara("previsao")}>{L.tabPrevisao}</button>
             <button role="tab" className={`tab ${vista === "perfil" ? "ativo" : ""}`} onClick={() => irPara("perfil")}>{L.tabPerfil}</button>
           </nav>
 
@@ -2333,6 +2484,10 @@ ${L.pInstr}`;
 
           {vista === "mapa" && (
             <EcraMapaNatal L={L} sessao={sessao} idioma={idioma} perfil={perfil} ehPro={ehPro} />
+          )}
+
+          {vista === "previsao" && (
+            <EcraPrevisaoAnual L={L} sessao={sessao} idioma={idioma} perfil={perfil} />
           )}
 
           {vista === "perfil" && (
@@ -2758,6 +2913,7 @@ const css = `
 .roda-glifo-signo { fill: #c9a35c; font-size: 15px; }
 .roda-planeta { fill: #e9e3f2; font-size: 15px; }
 .roda-planeta-grau { fill: #948aae; font-size: 7px; }
+.roda-nodo { fill: #b89dd6; font-size: 13px; }
 .roda-asp-harm { stroke: rgba(120,160,200,.3); stroke-width: .7; }
 .roda-asp-tenso { stroke: rgba(200,120,120,.28); stroke-width: .7; }
 .mapa-tres { display: flex; justify-content: center; gap: 12px; margin-bottom: 26px; }
@@ -2768,6 +2924,7 @@ const css = `
 .mapa-par { font-size: 15px; line-height: 1.7; color: #cdbdf0; margin-bottom: 12px; }
 .mapa-pdf-btn { display: block; margin: 30px auto 0; background: rgba(201,163,92,.14); color: #e6c885; border: 1px solid rgba(201,163,92,.4); border-radius: 11px; padding: 12px 26px; font-size: 14px; cursor: pointer; }
 @media print { .tabs, .topo, .mapa-pdf-btn, .mapa-cabeca { display: none !important; } .mapa-par, .mapa-h3 { color: #1a1330 !important; } body { background: #fff !important; } }
+.prev-data { text-align: center; font-size: 13px; color: #948aae; margin-bottom: 20px; font-style: italic; }
 .horo-wrap { max-width: 640px; margin: 0 auto; }
 .horo-cabeca { text-align: center; margin-bottom: 22px; }
 .horo-titulo { font-family: 'Cormorant Garamond', serif; font-size: 27px; color: #e8c87e; margin-bottom: 4px; }
