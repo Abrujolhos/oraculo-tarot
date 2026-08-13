@@ -20,6 +20,11 @@ const PT = {
   contaCriada: "Conta criada! Verifica o teu email para confirmar e depois entra.",
   momento: "Um momento…", criarConta: "Criar conta", sair: "Sair",
   tabLeitura: "✦ Leitura", tabHist: "☾ Histórico", tabRel: "◐ Relatório",
+  tabHoroscopo: "♓ Horóscopo",
+  horoTitulo: "Horóscopo da Semana",
+  horoSemanaDe: "Semana de",
+  horoCarregar: "A consultar os astros...",
+  horoBreve: "O horóscopo desta semana está a ser preparado. Volta em breve.",
   vertente: "Vertente", perguntaLbl: "Pergunta", opcional: "(opcional)",
   perguntaPH: "Ex.: Devo avançar com o novo projeto este mês?",
   tiragemLbl: "Tiragem", carta1: "carta", cartasN: "cartas",
@@ -208,6 +213,9 @@ Sê específico ao que os dados mostram; nunca genérico.`,
 
 const BR = {
   ...PT,
+  horoTitulo: "Horóscopo da Semana",
+  horoCarregar: "Consultando os astros...",
+  horoBreve: "O horóscopo desta semana está sendo preparado. Volte em breve.",
   erroIdade: "Você precisa ter pelo menos 18 anos para usar o Oráculo.",
   erroRate: "Muitos pedidos seguidos. Aguarde um momento e tente de novo.",
   relCartaMes: "Sua carta do mês",
@@ -343,6 +351,11 @@ const EN = {
   contaCriada: "Account created! Check your email to confirm, then sign in.",
   momento: "One moment…", criarConta: "Create account", sair: "Sign out",
   tabLeitura: "✦ Reading", tabHist: "☾ History", tabRel: "◐ Report",
+  tabHoroscopo: "♓ Horoscope",
+  horoTitulo: "Horoscope of the Week",
+  horoSemanaDe: "Week of",
+  horoCarregar: "Consulting the stars...",
+  horoBreve: "This week's horoscope is being prepared. Come back soon.",
   vertente: "Theme", perguntaLbl: "Question", opcional: "(optional)",
   perguntaPH: "E.g.: Should I move forward with the new project this month?",
   tiragemLbl: "Spread", carta1: "card", cartasN: "cards",
@@ -971,6 +984,74 @@ function Onboarding({ L, onFechar }) {
           {ultimo ? L.obComecar : L.obSeguinte}
         </button>
         {!ultimo && <button className="ob-saltar" onClick={onFechar}>{L.obSaltar}</button>}
+      </div>
+    </div>
+  );
+}
+
+const SIGNOS_ORDEM = ["Carneiro","Touro","Gémeos","Caranguejo","Leão","Virgem","Balança","Escorpião","Sagitário","Capricórnio","Aquário","Peixes"];
+const SIGNO_SIMBOLO = { "Carneiro":"♈","Touro":"♉","Gémeos":"♊","Caranguejo":"♋","Leão":"♌","Virgem":"♍","Balança":"♎","Escorpião":"♏","Sagitário":"♐","Capricórnio":"♑","Aquário":"♒","Peixes":"♓" };
+
+function EcraHoroscopo({ L, sessao, idioma, signo }) {
+  const [horoscopos, setHoroscopos] = useState(null);
+  const [selecionado, setSelecionado] = useState(signo || "Carneiro");
+  const [carregando, setCarregando] = useState(true);
+  const [semana, setSemana] = useState("");
+
+  useEffect(() => { if (signo) setSelecionado(signo); }, [signo]);
+
+  useEffect(() => {
+    (async () => {
+      setCarregando(true);
+      try {
+        // idioma da app → idioma guardado (fallback pt-PT)
+        const idi = idioma === "en" ? "en" : "pt-PT";
+        const dados = await dbGet(sessao.token, `horoscopo_semanal?select=signo,texto,semana_inicio&idioma=eq.${idi}&order=semana_inicio.desc&limit=24`);
+        if (Array.isArray(dados) && dados.length) {
+          const semanaMaisRecente = dados[0].semana_inicio;
+          const daSemana = dados.filter((d) => d.semana_inicio === semanaMaisRecente);
+          const mapa = {};
+          daSemana.forEach((d) => { mapa[d.signo] = d.texto; });
+          setHoroscopos(mapa);
+          setSemana(semanaMaisRecente);
+        } else {
+          setHoroscopos({});
+        }
+      } catch (e) { setHoroscopos({}); }
+      setCarregando(false);
+    })();
+  }, [sessao, idioma]);
+
+  const textoSel = horoscopos && horoscopos[selecionado];
+
+  return (
+    <div className="horo-wrap">
+      <div className="horo-cabeca">
+        <h2 className="horo-titulo">{L.horoTitulo}</h2>
+        {semana && <p className="horo-semana">{L.horoSemanaDe} {new Date(semana).toLocaleDateString(idioma === "en" ? "en-GB" : "pt-PT", { day: "numeric", month: "long" })}</p>}
+      </div>
+
+      <div className="horo-signos">
+        {SIGNOS_ORDEM.map((s) => (
+          <button key={s} className={`horo-signo ${selecionado === s ? "ativo" : ""}`} onClick={() => setSelecionado(s)} aria-label={s}>
+            <span className="horo-simb">{SIGNO_SIMBOLO[s]}</span>
+            <span className="horo-nome">{s}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="horo-texto-caixa">
+        <div className="horo-texto-cabeca">
+          <span className="horo-texto-simb">{SIGNO_SIMBOLO[selecionado]}</span>
+          <span className="horo-texto-nome">{selecionado}</span>
+        </div>
+        {carregando ? (
+          <p className="horo-vazio">{L.horoCarregar}</p>
+        ) : textoSel ? (
+          <p className="horo-texto">{textoSel}</p>
+        ) : (
+          <p className="horo-vazio">{L.horoBreve}</p>
+        )}
       </div>
     </div>
   );
@@ -1946,10 +2027,15 @@ ${L.pInstr}`;
             <button role="tab" className={`tab ${vista === "relatorio" ? "ativo" : ""}`} onClick={() => irPara("relatorio")}>
               {L.tabRel}{!ehPro ? " 🔒" : ""}
             </button>
+            <button role="tab" className={`tab ${vista === "horoscopo" ? "ativo" : ""}`} onClick={() => irPara("horoscopo")}>{L.tabHoroscopo}</button>
             <button role="tab" className={`tab ${vista === "perfil" ? "ativo" : ""}`} onClick={() => irPara("perfil")}>{L.tabPerfil}</button>
           </nav>
 
           {vista === "pro" && <Paywall L={L} userId={sessao.user.id} ehPro={ehPro} />}
+
+          {vista === "horoscopo" && (
+            <EcraHoroscopo L={L} sessao={sessao} idioma={idioma} signo={perfil?.signo} />
+          )}
 
           {vista === "perfil" && (
             <EcraPerfil
@@ -2355,6 +2441,25 @@ const css = `
 }
 @keyframes cadente { 0%, 96% { opacity: 0; transform: rotate(-28deg) translateX(0); } 97% { opacity: .9; } 100% { opacity: 0; transform: rotate(-28deg) translateX(220px); } }
 
+.horo-wrap { max-width: 640px; margin: 0 auto; }
+.horo-cabeca { text-align: center; margin-bottom: 22px; }
+.horo-titulo { font-family: 'Cormorant Garamond', serif; font-size: 27px; color: #e8c87e; margin-bottom: 4px; }
+.horo-semana { font-size: 13px; color: #948aae; }
+.horo-signos { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 24px; }
+.horo-signo { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px; background: rgba(30,22,54,.4); border: 1px solid rgba(150,130,200,.15); border-radius: 11px; cursor: pointer; transition: all .18s; }
+.horo-signo:hover { border-color: rgba(201,163,92,.4); }
+.horo-signo.ativo { background: linear-gradient(160deg, rgba(201,163,92,.18), rgba(30,22,54,.5)); border-color: rgba(201,163,92,.55); }
+.horo-simb { font-size: 20px; color: #cdbdf0; }
+.horo-signo.ativo .horo-simb { color: #e8c87e; }
+.horo-nome { font-size: 9.5px; color: #948aae; letter-spacing: .2px; }
+.horo-signo.ativo .horo-nome { color: #cdbdf0; }
+.horo-texto-caixa { background: linear-gradient(160deg, rgba(30,22,54,.55), rgba(13,10,26,.4)); border: 1px solid rgba(201,163,92,.22); border-radius: 16px; padding: 26px 24px; min-height: 160px; }
+.horo-texto-cabeca { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid rgba(150,130,200,.15); }
+.horo-texto-simb { font-size: 30px; color: #e8c87e; }
+.horo-texto-nome { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: #e9e3f2; }
+.horo-texto { font-size: 16px; line-height: 1.7; color: #cdbdf0; }
+.horo-vazio { font-size: 15px; color: #948aae; font-style: italic; text-align: center; padding: 30px 0; }
+@media (max-width: 480px) { .horo-signos { grid-template-columns: repeat(4, 1fr); } }
 .topo, .painel, .ritual, .tabs { position: relative; z-index: 1; }
 
 .topo { text-align: center; margin-bottom: 20px; }
