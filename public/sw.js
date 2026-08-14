@@ -1,5 +1,5 @@
-// v3 — cache mínimo, sempre rede primeiro. Resolve versões presas em cache.
-const CACHE = "oraculo-v3";
+// v4 — cache mínimo, sempre rede primeiro. Resolve versões presas em cache.
+const CACHE = "occulta-v4";
 
 self.addEventListener("install", () => {
   self.skipWaiting(); // ativa imediatamente a nova versão
