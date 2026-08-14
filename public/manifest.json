@@ -1,6 +1,6 @@
 {
-  "short_name": "Oráculo",
-  "name": "Oráculo — Tarot com IA",
+  "short_name": "Occulta",
+  "name": "Occulta Tarot — Tarot e Astrologia com IA",
   "description": "O teu baralho de tarot, sempre contigo. Leituras personalizadas por IA.",
   "icons": [
     { "src": "icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },

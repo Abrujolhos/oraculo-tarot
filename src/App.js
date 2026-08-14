@@ -38,7 +38,7 @@ const PT = {
   pdfLeituras: "Histórico de Leituras",
   pdfAsc: "Ascendente", pdfMc: "Meio-Céu", pdfNodo: "Nodo Norte", pdfCasa: "casa",
   pdfVazio: "Ainda não há dados astrológicos para mostrar.",
-  pdfRodape: "Documento gerado pela aplicação Oráculo. Os teus dados são teus.",
+  pdfRodape: "Documento gerado pela Occulta Tarot. Os teus dados são teus.",
   mapaTitulo: "O teu Mapa Natal",
   mapaSub: "O céu no instante em que nasceste",
   mapaIntro: "O teu mapa natal é o retrato astrológico único do momento do teu nascimento — os planetas, as casas e os aspetos que moldam quem és. Gera o teu agora.",
@@ -117,7 +117,7 @@ const PT = {
   consentTxt: "Aceito receber, ocasionalmente, novidades e ofertas de outros serviços Kairos. Podes retirar este consentimento a qualquer momento. Os teus dados de leitura nunca são partilhados sem esta autorização.",
   perfilGuardar: "Guardar perfil",
   perfilGuardado: "✓ Perfil guardado",
-  erroIdade: "Tens de ter pelo menos 18 anos para usar o Oráculo.",
+  erroIdade: "Tens de ter pelo menos 18 anos para usar a Occulta.",
   erroRate: "Demasiados pedidos seguidos. Aguarda um momento e tenta de novo.",
   relCartaMes: "A tua carta do mês",
   relVezes: "vezes",
@@ -125,10 +125,10 @@ const PT = {
   relAntes: "antes:",
   relFoco: "Foco",
   relRitmo: "O teu ritmo",
-  ritmoManha: "Consultas o Oráculo sobretudo de manhã — começas o dia a ouvir-te.",
-  ritmoTarde: "Procuras o Oráculo mais à tarde — uma pausa para refletir no meio do dia.",
+  ritmoManha: "Consultas o oráculo sobretudo de manhã — começas o dia a ouvir-te.",
+  ritmoTarde: "Procuras o oráculo mais à tarde — uma pausa para refletir no meio do dia.",
   ritmoNoite: "É à noite que mais consultas — o momento de fazer o balanço do dia.",
-  ritmoMadrugada: "Consultas o Oráculo na calada da madrugada — quando o mundo silencia.",
+  ritmoMadrugada: "Consultas o oráculo na calada da madrugada — quando o mundo silencia.",
   relSint1: "Este mês tiveste",
   relSint2: "sobretudo à volta de",
   relSint3: "com destaque para",
@@ -154,17 +154,17 @@ const PT = {
   elTerra: "Terra · matéria e trabalho",
   elAr: "Ar · mente e comunicação",
   elAgua: "Água · emoções e relações",
-  obTitulo1: "Bem-vindo ao Oráculo",
+  obTitulo1: "Bem-vindo à Occulta",
   obTexto1: "Um espaço de reflexão através do tarot. Escolhes uma tiragem, reveles as cartas, e recebes uma leitura pensada para ti.",
   obTitulo2: "Como funciona uma tiragem",
-  obTexto2: "Escolhe o tema (amor, carreira, decisão…) e o tipo de tiragem. Toca em cada carta para a revelar — vês logo o significado. No fim, o Oráculo tece tudo numa leitura completa.",
+  obTexto2: "Escolhe o tema (amor, carreira, decisão…) e o tipo de tiragem. Toca em cada carta para a revelar — vês logo o significado. No fim, o oráculo tece tudo numa leitura completa.",
   obTitulo3: "Torna-a tua",
   obTexto3: "Preenche o perfil com a tua data e hora de nascimento: as leituras passam a cruzar as cartas com o teu Sol, Lua e Ascendente. Quanto mais souber de ti, mais pessoal fica.",
   obSeguinte: "Seguinte",
   obComecar: "Começar",
   obSaltar: "Saltar",
   ajudaTiragem: "Uma tiragem é a forma como as cartas são dispostas. Cada posição tem um significado — quanto mais cartas, mais profunda e detalhada a leitura.",
-  ajudaAstro: "☉ Sol: a tua essência e vontade. ☾ Lua: o teu mundo emocional. ↑ Ascendente: a forma como abordas o mundo. O Oráculo cruza os três com as cartas para uma leitura só tua.",
+  ajudaAstro: "☉ Sol: a tua essência e vontade. ☾ Lua: o teu mundo emocional. ↑ Ascendente: a forma como abordas o mundo. O oráculo cruza os três com as cartas para uma leitura só tua.",
   convTitulo: "Convida e ganha Pro",
   convTxt: "Partilha o teu código. Quando um amigo se regista e faz a primeira leitura, ganham ambos 14 dias de Pro. Até 30 dias no total.",
   convGerar: "Gerar o meu código",
@@ -172,7 +172,7 @@ const PT = {
   convCopiado: "Copiado!",
   convJa: "Convites com recompensa:",
   convMax: "máx. 30 dias de Pro",
-  memTitulo: "O que o Oráculo sabe sobre ti",
+  memTitulo: "O que o oráculo sabe sobre ti",
   memTxt: "Factos recolhidos das tuas conversas, usados para tornar as leituras mais pertinentes. Apaga o que não quiseres guardar.",
   memApagar: "Apagar este facto",
   privTitulo: "Privacidade e dados",
@@ -190,11 +190,11 @@ const PT = {
   privTxt: "Os teus dados servem para personalizar as tuas leituras. Não são usados para mais nada sem a tua autorização explícita.",
   soPro: "Exclusivo Pro",
   desbloqueia: "Desbloquear com o Pro",
-  proTit: "Oráculo Pro", proSub: "A experiência completa, sem limites",
+  proTit: "Occulta Pro", proSub: "A experiência completa, sem limites",
   proLista: [
     "Leituras ilimitadas, todos os dias",
     "Histórico guardado para sempre, com títulos e notas",
-    "O Oráculo lembra-se das tuas leituras e revela padrões",
+    "O oráculo lembra-se das tuas leituras e revela padrões",
     "Conversa de aprofundamento após cada leitura",
     "Relatório mensal com análise global por IA",
     "Modelo de IA premium, leituras mais profundas",
@@ -204,8 +204,8 @@ const PT = {
   poupa: "poupa 25%", equivale: "≈ $3,75/mês",
   assinarMensal: "Assinar mensal — $5/mês",
   assinarAnual: "Assinar anual — $45/ano",
-  jaPro: "És Pro ✦ Obrigado por apoiares o Oráculo",
-  chatPro: "No Pro podes conversar com o Oráculo sobre cada leitura — tirar dúvidas, aprofundar cartas, pedir conselhos.",
+  jaPro: "És Pro ✦ Obrigado por apoiares a Occulta",
+  chatPro: "No Pro podes conversar com o oráculo sobre cada leitura — tirar dúvidas, aprofundar cartas, pedir conselhos.",
   histPro: "No Pro, todas as leituras ficam guardadas com títulos, notas pessoais e pesquisa.",
   relPro: "No Pro tens o relatório mensal: estatísticas, cartas recorrentes e análise global por IA.",
   vertList: ["Geral", "Amor", "Carreira", "Dinheiro", "Saúde & Energia", "Espiritualidade"],
@@ -254,7 +254,7 @@ const BR = {
   privExportar: "Extrair meus dados (PDF)",
   pdfDoc: "Meus Dados Astrológicos",
   pdfMapaTitulo: "Meu Mapa Natal",
-  pdfRodape: "Documento gerado pelo aplicativo Oráculo. Seus dados são seus.",
+  pdfRodape: "Documento gerado pela Occulta Tarot. Seus dados são seus.",
   mapaTitulo: "Seu Mapa Natal",
   mapaSub: "O céu no instante em que você nasceu",
   mapaGerar: "Gerar meu mapa natal",
@@ -265,7 +265,7 @@ const BR = {
   horoTitulo: "Horóscopo da Semana",
   horoCarregar: "Consultando os astros...",
   horoBreve: "O horóscopo desta semana está sendo preparado. Volte em breve.",
-  erroIdade: "Você precisa ter pelo menos 18 anos para usar o Oráculo.",
+  erroIdade: "Você precisa ter pelo menos 18 anos para usar a Occulta.",
   erroRate: "Muitos pedidos seguidos. Aguarde um momento e tente de novo.",
   relCartaMes: "Sua carta do mês",
   relVezes: "vezes",
@@ -273,10 +273,10 @@ const BR = {
   relAntes: "antes:",
   relFoco: "Foco",
   relRitmo: "Seu ritmo",
-  ritmoManha: "Você consulta o Oráculo sobretudo de manhã — começa o dia se ouvindo.",
-  ritmoTarde: "Procura o Oráculo mais à tarde — uma pausa para refletir no meio do dia.",
+  ritmoManha: "Você consulta o oráculo sobretudo de manhã — começa o dia se ouvindo.",
+  ritmoTarde: "Procura o oráculo mais à tarde — uma pausa para refletir no meio do dia.",
   ritmoNoite: "É à noite que mais consulta — o momento de fazer o balanço do dia.",
-  ritmoMadrugada: "Consulta o Oráculo na madrugada — quando o mundo silencia.",
+  ritmoMadrugada: "Consulta o oráculo na madrugada — quando o mundo silencia.",
   relSint1: "Este mês você teve",
   relSint2: "sobretudo em torno de",
   relSint3: "com destaque para",
@@ -302,16 +302,16 @@ const BR = {
   elTerra: "Terra · matéria e trabalho",
   elAr: "Ar · mente e comunicação",
   elAgua: "Água · emoções e relações",
-  obTitulo1: "Bem-vindo ao Oráculo",
+  obTitulo1: "Bem-vindo à Occulta",
   obTexto1: "Um espaço de reflexão através do tarô. Você escolhe uma tiragem, revela as cartas, e recebe uma leitura pensada para você.",
   obTitulo2: "Como funciona uma tiragem",
-  obTexto2: "Escolha o tema (amor, carreira, decisão…) e o tipo de tiragem. Toque em cada carta para revelá-la — você vê logo o significado. No fim, o Oráculo tece tudo numa leitura completa.",
+  obTexto2: "Escolha o tema (amor, carreira, decisão…) e o tipo de tiragem. Toque em cada carta para revelá-la — você vê logo o significado. No fim, o oráculo tece tudo numa leitura completa.",
   obTitulo3: "Torne-a sua",
   obTexto3: "Preencha o perfil com sua data e hora de nascimento: as leituras passam a cruzar as cartas com seu Sol, Lua e Ascendente. Quanto mais souber de você, mais pessoal fica.",
   obSeguinte: "Seguinte",
   obComecar: "Começar",
   obSaltar: "Pular",
-  memTitulo: "O que o Oráculo sabe sobre você",
+  memTitulo: "O que o oráculo sabe sobre você",
   memTxt: "Fatos coletados das suas conversas, usados para tornar as leituras mais pertinentes. Apague o que não quiser guardar.",
   memApagar: "Apagar este fato",
   privTitulo: "Privacidade e dados",
@@ -372,15 +372,15 @@ const BR = {
   proLista: [
     "Leituras ilimitadas, todos os dias",
     "Histórico salvo para sempre, com títulos e notas",
-    "O Oráculo lembra das suas leituras e revela padrões",
+    "O oráculo lembra das suas leituras e revela padrões",
     "Conversa de aprofundamento após cada leitura",
     "Relatório mensal com análise global por IA",
     "Modelo de IA premium, leituras mais profundas",
     "Sem anúncios",
   ],
   poupa: "economize 25%",
-  jaPro: "Você é Pro ✦ Obrigado por apoiar o Oráculo",
-  chatPro: "No Pro você conversa com o Oráculo sobre cada leitura — tirar dúvidas, aprofundar cartas, pedir conselhos.",
+  jaPro: "Você é Pro ✦ Obrigado por apoiar a Occulta",
+  chatPro: "No Pro você conversa com o oráculo sobre cada leitura — tirar dúvidas, aprofundar cartas, pedir conselhos.",
   histPro: "No Pro, todas as leituras ficam salvas com títulos, notas pessoais e busca.",
   relPro: "No Pro você tem o relatório mensal: estatísticas, cartas recorrentes e análise global por IA.",
   erroDados: "Não foi possível carregar seus dados.",
@@ -418,7 +418,7 @@ const EN = {
   pdfLeituras: "Reading History",
   pdfAsc: "Ascendant", pdfMc: "Midheaven", pdfNodo: "North Node", pdfCasa: "house",
   pdfVazio: "No astrological data to show yet.",
-  pdfRodape: "Document generated by the Oráculo app. Your data is yours.",
+  pdfRodape: "Document generated by Occulta Tarot. Your data is yours.",
   mapaTitulo: "Your Birth Chart",
   mapaSub: "The sky at the moment you were born",
   mapaIntro: "Your birth chart is the unique astrological portrait of your moment of birth — the planets, houses and aspects that shape who you are. Generate yours now.",
@@ -497,7 +497,7 @@ const EN = {
   consentTxt: "I agree to occasionally receive news and offers from other Kairos services. You can withdraw this consent at any time. Your reading data is never shared without this authorization.",
   perfilGuardar: "Save profile",
   perfilGuardado: "✓ Profile saved",
-  erroIdade: "You must be at least 18 to use Oráculo.",
+  erroIdade: "You must be at least 18 to use Occulta.",
   erroRate: "Too many requests in a row. Please wait a moment and try again.",
   relCartaMes: "Your card of the month",
   relVezes: "times",
@@ -505,10 +505,10 @@ const EN = {
   relAntes: "before:",
   relFoco: "Focus",
   relRitmo: "Your rhythm",
-  ritmoManha: "You consult Oráculo mostly in the morning — starting the day by listening to yourself.",
-  ritmoTarde: "You seek Oráculo more in the afternoon — a pause to reflect mid-day.",
+  ritmoManha: "You consult the oracle mostly in the morning — starting the day by listening to yourself.",
+  ritmoTarde: "You seek the oracle more in the afternoon — a pause to reflect mid-day.",
   ritmoNoite: "It's at night you consult most — the moment to take stock of the day.",
-  ritmoMadrugada: "You consult Oráculo in the small hours — when the world falls silent.",
+  ritmoMadrugada: "You consult the oracle in the small hours — when the world falls silent.",
   relSint1: "This month you had",
   relSint2: "mostly around",
   relSint3: "notably",
@@ -534,17 +534,17 @@ const EN = {
   elTerra: "Earth · matter and work",
   elAr: "Air · mind and communication",
   elAgua: "Water · emotions and relationships",
-  obTitulo1: "Welcome to Oráculo",
+  obTitulo1: "Welcome to Occulta",
   obTexto1: "A space for reflection through tarot. You choose a spread, reveal the cards, and receive a reading made for you.",
   obTitulo2: "How a spread works",
-  obTexto2: "Pick a theme (love, career, a decision…) and the type of spread. Tap each card to reveal it — you see its meaning right away. At the end, Oráculo weaves it all into a full reading.",
+  obTexto2: "Pick a theme (love, career, a decision…) and the type of spread. Tap each card to reveal it — you see its meaning right away. At the end, the oracle weaves it all into a full reading.",
   obTitulo3: "Make it yours",
   obTexto3: "Fill in your profile with your birth date and time: readings will then cross the cards with your Sun, Moon and Ascendant. The more it knows about you, the more personal it gets.",
   obSeguinte: "Next",
   obComecar: "Begin",
   obSaltar: "Skip",
   ajudaTiragem: "A spread is how the cards are laid out. Each position has a meaning — more cards means a deeper, more detailed reading.",
-  ajudaAstro: "☉ Sun: your essence and will. ☾ Moon: your emotional world. ↑ Rising: how you approach the world. Oráculo crosses all three with the cards for a reading that's uniquely yours.",
+  ajudaAstro: "☉ Sun: your essence and will. ☾ Moon: your emotional world. ↑ Rising: how you approach the world. The oracle crosses all three with the cards for a reading that's uniquely yours.",
   convTitulo: "Invite & earn Pro",
   convTxt: "Share your code. When a friend signs up and does their first reading, you both get 14 days of Pro. Up to 30 days total.",
   convGerar: "Generate my code",
@@ -552,7 +552,7 @@ const EN = {
   convCopiado: "Copied!",
   convJa: "Rewarded invites:",
   convMax: "max. 30 days of Pro",
-  memTitulo: "What Oráculo knows about you",
+  memTitulo: "What the oracle knows about you",
   memTxt: "Facts gathered from your conversations, used to make readings more relevant. Delete anything you'd rather not keep.",
   memApagar: "Delete this fact",
   privTitulo: "Privacy & data",
@@ -571,7 +571,7 @@ const EN = {
   signos: { "Capricórnio": "Capricorn", "Aquário": "Aquarius", "Peixes": "Pisces", "Carneiro": "Aries", "Touro": "Taurus", "Gémeos": "Gemini", "Caranguejo": "Cancer", "Leão": "Leo", "Virgem": "Virgo", "Balança": "Libra", "Escorpião": "Scorpio", "Sagitário": "Sagittarius" },
   soPro: "Pro only",
   desbloqueia: "Unlock with Pro",
-  proTit: "Oráculo Pro", proSub: "The full experience, no limits",
+  proTit: "Occulta Pro", proSub: "The full experience, no limits",
   proLista: [
     "Unlimited readings, every day",
     "History saved forever, with titles and notes",
@@ -585,7 +585,7 @@ const EN = {
   poupa: "save 25%", equivale: "≈ $3.75/mo",
   assinarMensal: "Subscribe monthly — $5/mo",
   assinarAnual: "Subscribe yearly — $45/yr",
-  jaPro: "You're Pro ✦ Thank you for supporting Oráculo",
+  jaPro: "You're Pro ✦ Thank you for supporting Occulta",
   chatPro: "With Pro you can talk to the Oracle about each reading — ask questions, go deeper, get advice.",
   histPro: "With Pro, every reading is saved with titles, personal notes and search.",
   relPro: "With Pro you get the monthly report: stats, recurring cards and AI global analysis.",
@@ -1688,7 +1688,7 @@ function montarPdfDados(dados, L, idioma) {
   }
 
   return `<!DOCTYPE html><html lang="${idioma}"><head><meta charset="utf-8">
-<title>${L.pdfDoc} — Oráculo</title>
+<title>${L.pdfDoc} — Occulta Tarot</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Outfit:wght@300;400;500&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1713,7 +1713,7 @@ function montarPdfDados(dados, L, idioma) {
 <div class="capa">
   <div class="simbolo">✦</div>
   <h1>${L.pdfDoc}</h1>
-  <div class="sub">Oráculo · ${dataStr}</div>
+  <div class="sub">Occulta Tarot · ${dataStr}</div>
   ${perfil.nome ? `<div class="nome">${esc(perfil.nome)}</div>` : ""}
 </div>
 ${corpo || `<p>${L.pdfVazio}</p>`}
@@ -2543,7 +2543,18 @@ ${L.pInstr}`;
           ))}
         </div>
         <div className="topo-orn">✶&nbsp;&nbsp;☾&nbsp;&nbsp;✶</div>
-        <h1>Oráculo</h1>
+        <div className="marca-simbolo" aria-hidden="true">
+          <svg width="58" height="58" viewBox="0 0 150 150">
+            <defs><linearGradient id="occ-g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#f0d68a"/><stop offset="1" stopColor="#c9a35c"/></linearGradient></defs>
+            <circle cx="75" cy="75" r="54" fill="none" stroke="url(#occ-g)" strokeWidth="2.5"/>
+            <path d="M 44 75 Q 75 50 106 75 Q 75 100 44 75 Z" fill="none" stroke="url(#occ-g)" strokeWidth="2.2"/>
+            <circle cx="75" cy="75" r="12" fill="url(#occ-g)"/>
+            <circle cx="80" cy="71" r="9.5" fill="#0d1120"/>
+          </svg>
+        </div>
+        <h1>OCCULTA</h1>
+        <div className="marca-tarot">T A R O T</div>
         <p className="topo-sub">{L.sub}</p>
         {sessao && (
           <div className="conta-linha">
@@ -2969,7 +2980,7 @@ ${L.pInstr}`;
 /* ─────────── ESTILO ─────────── */
 
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Cinzel:wght@400;500;600&family=Jost:wght@300;400;500&display=swap');
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -3055,13 +3066,15 @@ const css = `
 }
 .lingua.ativo { background: #c9a35c; color: #14101f; border-color: #c9a35c; font-weight: 500; }
 .topo-orn { color: #c9a35c; letter-spacing: 6px; font-size: 13px; opacity: .85; }
+.marca-simbolo { margin: 4px auto 2px; line-height: 0; }
 .topo h1 {
-  font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 44px;
-  letter-spacing: 7px; text-transform: uppercase; margin-top: 6px;
+  font-family: 'Cinzel', serif; font-weight: 500; font-size: 40px;
+  letter-spacing: 6px; text-transform: uppercase; margin-top: 2px;
   background: linear-gradient(180deg, #f6efe0 30%, #cdb98a);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.topo-sub { color: #8d83a5; font-size: 12.5px; letter-spacing: 3px; text-transform: uppercase; margin-top: 5px; }
+.marca-tarot { font-family: 'Outfit', 'Jost', sans-serif; color: #9a8fb4; font-size: 11px; letter-spacing: 7px; font-weight: 300; margin-top: 2px; }
+.topo-sub { color: #8d83a5; font-size: 12.5px; letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; }
 .conta-linha { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 10px; font-size: 13px; color: #9a8fb4; }
 .conta-nome { display: inline-flex; align-items: center; gap: 8px; }
 .badge.plano { border: none; cursor: pointer; font-family: inherit; background: rgba(141,131,165,.25); color: #b8aecb; }
