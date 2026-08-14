@@ -3071,13 +3071,20 @@ const css = `
   display: flex; gap: 6px; max-width: 560px; margin: 0 auto 26px;
   background: rgba(30,24,48,.55); border: 1px solid rgba(201,163,92,.25);
   border-radius: 999px; padding: 5px;
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch;
 }
+.tabs::-webkit-scrollbar { display: none; }
 .tab {
-  flex: 1; background: transparent; color: #9a8fb4; border: none;
-  border-radius: 999px; padding: 9px 6px; font-family: inherit;
+  flex: 1 0 auto; background: transparent; color: #9a8fb4; border: none;
+  border-radius: 999px; padding: 9px 14px; font-family: inherit;
   font-size: 13px; cursor: pointer; transition: all .25s; white-space: nowrap;
 }
 .tab.ativo { background: linear-gradient(180deg, #e0bd72, #c9a35c); color: #14101f; font-weight: 500; }
+
+@media (max-width: 560px) {
+  .tabs { border-radius: 18px; justify-content: flex-start; }
+  .tab { flex: 0 0 auto; padding: 9px 13px; }
+}
 
 .entra { animation: surgir .55s cubic-bezier(.2,.7,.3,1) both; }
 @keyframes surgir { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
