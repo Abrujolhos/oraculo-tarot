@@ -165,6 +165,17 @@ const PT = {
   obSaltar: "Saltar",
   ajudaTiragem: "Uma tiragem é a forma como as cartas são dispostas. Cada posição tem um significado — quanto mais cartas, mais profunda e detalhada a leitura.",
   ajudaAstro: "☉ Sol: a tua essência e vontade. ☾ Lua: o teu mundo emocional. ↑ Ascendente: a forma como abordas o mundo. O oráculo cruza os três com as cartas para uma leitura só tua.",
+  apoioTitulo: "Apoio e contacto",
+  apoioTxt: "Precisas de ajuda ou encontraste um problema? Fala connosco — estamos aqui para ti.",
+  apoioEmail: "apoio@occulta.app",
+  apoioReportarBtn: "Reportar um problema",
+  apoioPlaceholder: "Descreve o que aconteceu. Quanto mais detalhe, mais rápido resolvemos.",
+  apoioEnviar: "Enviar",
+  apoioAEnviar: "A enviar…",
+  apoioCancelar: "Cancelar",
+  apoioEnviado: "Recebido! Obrigado por nos ajudares a melhorar.",
+  apoioCurto: "Escreve um pouco mais para percebermos.",
+  apoioErro: "Não foi possível enviar. Tenta o email acima.",
   convTitulo: "Convida e ganha Pro",
   convTxt: "Partilha o teu código. Quando um amigo se regista e faz a primeira leitura, ganham ambos 14 dias de Pro. Até 30 dias no total.",
   convGerar: "Gerar o meu código",
@@ -249,6 +260,9 @@ Sê específico ao que os dados mostram; nunca genérico.`,
 
 const BR = {
   ...PT,
+  apoioTxt: "Precisa de ajuda ou encontrou um problema? Fale com a gente — estamos aqui para você.",
+  apoioPlaceholder: "Descreva o que aconteceu. Quanto mais detalhe, mais rápido resolvemos.",
+  apoioEnviado: "Recebido! Obrigado por nos ajudar a melhorar.",
   prevSub: "Seu ano astrológico, de aniversário a aniversário",
   prevGerar: "Gerar minha previsão",
   privExportar: "Extrair meus dados (PDF)",
@@ -545,6 +559,17 @@ const EN = {
   obSaltar: "Skip",
   ajudaTiragem: "A spread is how the cards are laid out. Each position has a meaning — more cards means a deeper, more detailed reading.",
   ajudaAstro: "☉ Sun: your essence and will. ☾ Moon: your emotional world. ↑ Rising: how you approach the world. The oracle crosses all three with the cards for a reading that's uniquely yours.",
+  apoioTitulo: "Support & contact",
+  apoioTxt: "Need help or found a problem? Reach out — we're here for you.",
+  apoioEmail: "apoio@occulta.app",
+  apoioReportarBtn: "Report a problem",
+  apoioPlaceholder: "Describe what happened. The more detail, the faster we fix it.",
+  apoioEnviar: "Send",
+  apoioAEnviar: "Sending…",
+  apoioCancelar: "Cancel",
+  apoioEnviado: "Received! Thank you for helping us improve.",
+  apoioCurto: "Please write a little more so we understand.",
+  apoioErro: "Couldn't send. Try the email above.",
   convTitulo: "Invite & earn Pro",
   convTxt: "Share your code. When a friend signs up and does their first reading, you both get 14 days of Pro. Up to 30 days total.",
   convGerar: "Generate my code",
@@ -1721,6 +1746,62 @@ ${corpo || `<p>${L.pdfVazio}</p>`}
 </body></html>`;
 }
 
+function SeccaoApoio({ L, sessao, vistaAtual }) {
+  const [aberto, setAberto] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [estado, setEstado] = useState("");
+
+  async function enviar() {
+    if (msg.trim().length < 3) { setEstado("curto"); return; }
+    setEstado("enviando");
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/reportar_problema`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessao.token}` },
+        body: JSON.stringify({ p_mensagem: msg.trim(), p_contexto: vistaAtual || null }),
+      });
+      const res = await r.json();
+      if (res === "ok") { setEstado("ok"); setMsg(""); setTimeout(() => { setAberto(false); setEstado(""); }, 2500); }
+      else setEstado("erro");
+    } catch (e) { setEstado("erro"); }
+  }
+
+  return (
+    <div className="apoio-zona">
+      <h3 className="apoio-titulo">{L.apoioTitulo}</h3>
+      <p className="apoio-txt">{L.apoioTxt}</p>
+
+      <a className="apoio-contacto" href={`mailto:${L.apoioEmail}`}>
+        <span className="apoio-icone">✉</span> {L.apoioEmail}
+      </a>
+
+      {!aberto ? (
+        <button className="priv-btn" onClick={() => setAberto(true)}>{L.apoioReportarBtn}</button>
+      ) : (
+        <div className="apoio-form">
+          <textarea
+            className="apoio-textarea"
+            placeholder={L.apoioPlaceholder}
+            value={msg}
+            onChange={(e) => setMsg(e.target.value)}
+            maxLength={1500}
+            rows={4}
+          />
+          {estado === "curto" && <p className="apoio-aviso">{L.apoioCurto}</p>}
+          {estado === "erro" && <p className="apoio-aviso">{L.apoioErro}</p>}
+          {estado === "ok" && <p className="apoio-ok">{L.apoioEnviado}</p>}
+          <div className="apoio-botoes">
+            <button className="apoio-cancelar" onClick={() => { setAberto(false); setMsg(""); setEstado(""); }}>{L.apoioCancelar}</button>
+            <button className="apoio-enviar" onClick={enviar} disabled={estado === "enviando"}>
+              {estado === "enviando" ? L.apoioAEnviar : L.apoioEnviar}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SeccaoConvites({ L, sessao, codigoInicial }) {
   const [codigo, setCodigo] = useState(codigoInicial || "");
   const [convites, setConvites] = useState(null);
@@ -2002,6 +2083,8 @@ function EcraPerfil({ L, idioma, sessao, perfil, onPerfilAtualizado, consentMark
       <button className="cta" onClick={guardar} disabled={ocupado}>
         {guardado ? L.perfilGuardado : ocupado ? L.aGuardar : L.perfilGuardar}
       </button>
+
+      <SeccaoApoio L={L} sessao={sessao} vistaAtual="perfil" />
 
       <SeccaoConvites L={L} sessao={sessao} codigoInicial={perfil?.codigo_convite} />
 
@@ -3522,6 +3605,20 @@ select.campo { cursor: pointer; }
 .ajuda-btn { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(201,163,92,.5); background: rgba(201,163,92,.12); color: #e6c885; font-size: 11px; line-height: 1; cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
 .ajuda-fundo { position: fixed; inset: 0; z-index: 40; }
 .ajuda-balao { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 41; width: 230px; background: #1a1330; border: 1px solid rgba(201,163,92,.35); border-radius: 10px; padding: 12px 14px; font-size: 12.5px; line-height: 1.5; color: #cdbdf0; box-shadow: 0 8px 28px rgba(0,0,0,.4); text-align: left; font-weight: 400; }
+.apoio-zona { margin-top: 34px; padding-top: 22px; border-top: 1px solid rgba(150,130,200,.18); }
+.apoio-titulo { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #e8c87e; margin-bottom: 6px; }
+.apoio-txt { font-size: 13px; color: #948aae; line-height: 1.55; margin-bottom: 14px; }
+.apoio-contacto { display: inline-flex; align-items: center; gap: 8px; color: #cdbdf0; text-decoration: none; font-size: 14px; background: rgba(30,22,54,.5); border: 1px solid rgba(201,163,92,.28); border-radius: 10px; padding: 11px 16px; margin-bottom: 14px; }
+.apoio-icone { color: #e8c87e; }
+.apoio-form { margin-top: 6px; }
+.apoio-textarea { width: 100%; background: rgba(13,10,26,.5); border: 1px solid rgba(150,130,200,.25); border-radius: 11px; padding: 12px 14px; font-family: inherit; font-size: 14px; color: #e9e3f2; resize: vertical; box-sizing: border-box; }
+.apoio-textarea:focus { outline: none; border-color: rgba(201,163,92,.5); }
+.apoio-aviso { font-size: 12.5px; color: #c97a7a; margin-top: 8px; }
+.apoio-ok { font-size: 12.5px; color: #7ac98f; margin-top: 8px; }
+.apoio-botoes { display: flex; gap: 10px; margin-top: 12px; }
+.apoio-cancelar { flex: 0 0 auto; background: transparent; color: #948aae; border: 1px solid rgba(150,130,200,.25); border-radius: 9px; padding: 10px 18px; font-size: 13px; cursor: pointer; }
+.apoio-enviar { flex: 1; background: linear-gradient(180deg, #e6c885, #c9a35c); color: #1a1330; border: none; border-radius: 9px; padding: 10px 18px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.apoio-enviar:disabled { opacity: .6; }
 .conv-zona { margin-top: 34px; padding-top: 22px; border-top: 1px solid rgba(150,130,200,.18); }
 .conv-titulo { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #e8c87e; margin-bottom: 6px; }
 .conv-txt { font-size: 13px; color: #948aae; line-height: 1.55; margin-bottom: 14px; }
