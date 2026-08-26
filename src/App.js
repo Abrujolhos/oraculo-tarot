@@ -4,9 +4,10 @@ import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient";
 /* ─────────── CONFIG ─────────── */
 
 // Links de pagamento Stripe — preencher no .env ou variáveis Vercel
-const STRIPE_LINK_MENSAL = process.env.REACT_APP_STRIPE_MENSAL || "https://buy.stripe.com/SUBSTITUIR_MENSAL";
+const STRIPE_LINK_MENSAL = process.env.REACT_APP_STRIPE_MENSAL || "https://buy.stripe.com/test_8x24gA4ve9JQaOG6c8ds400";
 const STRIPE_LINK_ANUAL = process.env.REACT_APP_STRIPE_ANUAL || "https://buy.stripe.com/SUBSTITUIR_ANUAL";
 const STRIPE_PORTAL = process.env.REACT_APP_STRIPE_PORTAL || "https://billing.stripe.com/p/login/SUBSTITUIR_PORTAL";
+const CODIGO_LANCAMENTO = "Occulta26";
 
 /* ─────────── i18n ─────────── */
 
@@ -211,10 +212,15 @@ const PT = {
     "Modelo de IA premium, leituras mais profundas",
     "Sem anúncios",
   ],
-  porMes: "/mês", mensal: "Mensal", anual: "Anual",
+  porMes: "/mês", mensal: "Occulta Pro", anual: "Anual",
   poupa: "poupa 25%", equivale: "≈ $3,75/mês",
-  assinarMensal: "Assinar mensal — $5/mês",
-  assinarAnual: "Assinar anual — $45/ano",
+  lancBadge: "✦ Preço de lançamento",
+  lancEquiv: "Oferta para os primeiros 200 fundadores",
+  codigoTitulo: "Usa o código de lançamento",
+  codigoTxt: "Ao pagar, escreve este código para teres o preço de fundador:",
+  codigoNota: "Escreve o código na página de pagamento, no campo \"Adicionar código promocional\". Sem o código, o valor será o normal (12,99€).",
+  assinarMensal: "Assinar Occulta Pro",
+  assinarAnual: "Assinar anual",
   jaPro: "És Pro ✦ Obrigado por apoiares a Occulta",
   chatPro: "No Pro podes conversar com o oráculo sobre cada leitura — tirar dúvidas, aprofundar cartas, pedir conselhos.",
   histPro: "No Pro, todas as leituras ficam guardadas com títulos, notas pessoais e pesquisa.",
@@ -260,6 +266,9 @@ Sê específico ao que os dados mostram; nunca genérico.`,
 
 const BR = {
   ...PT,
+  mensal: "Occulta Pro",
+  codigoTxt: "Ao pagar, digite este código para ter o preço de fundador:",
+  codigoNota: "Digite o código na página de pagamento, no campo \"Adicionar código promocional\". Sem o código, o valor será o normal (12,99€).",
   apoioTxt: "Precisa de ajuda ou encontrou um problema? Fale com a gente — estamos aqui para você.",
   apoioPlaceholder: "Descreva o que aconteceu. Quanto mais detalhe, mais rápido resolvemos.",
   apoioEnviado: "Recebido! Obrigado por nos ajudar a melhorar.",
@@ -606,10 +615,15 @@ const EN = {
     "Premium AI model, deeper readings",
     "No ads",
   ],
-  porMes: "/mo", mensal: "Monthly", anual: "Yearly",
+  porMes: "/mo", mensal: "Occulta Pro", anual: "Yearly",
   poupa: "save 25%", equivale: "≈ $3.75/mo",
-  assinarMensal: "Subscribe monthly — $5/mo",
-  assinarAnual: "Subscribe yearly — $45/yr",
+  lancBadge: "✦ Launch price",
+  lancEquiv: "Offer for the first 200 founders",
+  codigoTitulo: "Use the launch code",
+  codigoTxt: "At checkout, enter this code for the founder price:",
+  codigoNota: "Enter the code on the payment page, in the \"Add promotion code\" field. Without it, the normal price (€12.99) applies.",
+  assinarMensal: "Subscribe to Occulta Pro",
+  assinarAnual: "Subscribe yearly",
   jaPro: "You're Pro ✦ Thank you for supporting Occulta",
   chatPro: "With Pro you can talk to the Oracle about each reading — ask questions, go deeper, get advice.",
   histPro: "With Pro, every reading is saved with titles, personal notes and search.",
@@ -1485,19 +1499,29 @@ function Paywall({ L, userId, ehPro }) {
             <ul className="pw-lista">
               {L.proLista.map((f, i) => <li key={i}><span className="pw-check">✦</span>{f}</li>)}
             </ul>
-            <div className="pw-planos">
-              <a className="pw-plano" href={`${STRIPE_LINK_MENSAL}${ref}`} target="_blank" rel="noreferrer">
+            <div className="pw-lancamento">
+              <div className="pw-plano-unico">
+                <span className="pw-badge-lanc">{L.lancBadge}</span>
                 <span className="pw-plano-nome">{L.mensal}</span>
-                <span className="pw-preco">$5<small>{L.porMes}</small></span>
-                <span className="pw-cta">{L.assinarMensal}</span>
+                <span className="pw-preco">
+                  <span className="pw-preco-riscado">12,99€</span>
+                  6,99€<small>{L.porMes}</small>
+                </span>
+                <span className="pw-equiv">{L.lancEquiv}</span>
+              </div>
+
+              <div className="pw-codigo-aviso">
+                <span className="pw-codigo-icone">🎁</span>
+                <div>
+                  <p className="pw-codigo-titulo">{L.codigoTitulo}</p>
+                  <p className="pw-codigo-txt">{L.codigoTxt} <strong className="pw-codigo-code">{CODIGO_LANCAMENTO}</strong></p>
+                </div>
+              </div>
+
+              <a className="pw-cta bloco" href={`${STRIPE_LINK_MENSAL}${ref}`} target="_blank" rel="noreferrer">
+                {L.assinarMensal}
               </a>
-              <a className="pw-plano destaque" href={`${STRIPE_LINK_ANUAL}${ref}`} target="_blank" rel="noreferrer">
-                <span className="pw-poupa">{L.poupa}</span>
-                <span className="pw-plano-nome">{L.anual}</span>
-                <span className="pw-preco">$45<small>/{L.anual.toLowerCase().slice(0,3)}</small></span>
-                <span className="pw-equiv">{L.equivale}</span>
-                <span className="pw-cta">{L.assinarAnual}</span>
-              </a>
+              <p className="pw-codigo-nota">{L.codigoNota}</p>
             </div>
           </>
         )}
@@ -3327,6 +3351,37 @@ const css = `
 .pw-preco small { font-size: 15px; color: #9a8fb4; }
 .pw-equiv { color: #c9a35c; font-size: 12.5px; }
 .pw-cta { margin-top: 6px; color: #e8c87e; font-size: 12.5px; letter-spacing: 1px; text-transform: uppercase; }
+
+.pw-lancamento { display: flex; flex-direction: column; gap: 16px; }
+.pw-plano-unico {
+  position: relative; text-align: center;
+  background: linear-gradient(170deg, rgba(201,163,92,.12), rgba(30,24,48,.5));
+  border: 1px solid rgba(201,163,92,.45); box-shadow: 0 0 0 1px rgba(201,163,92,.2);
+  border-radius: 16px; padding: 26px 16px 20px; display: flex; flex-direction: column; gap: 6px;
+}
+.pw-badge-lanc {
+  position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(90deg, #e6c885, #c9a35c); color: #14101f; font-size: 10.5px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase; border-radius: 999px; padding: 4px 14px; white-space: nowrap;
+}
+.pw-preco-riscado {
+  display: block; font-size: 20px; color: #8a7fa0; text-decoration: line-through;
+  text-decoration-color: rgba(201,120,120,.8); font-weight: 400; margin-bottom: -2px;
+}
+.pw-codigo-aviso {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: rgba(201,163,92,.08); border: 1px dashed rgba(201,163,92,.5);
+  border-radius: 12px; padding: 14px 16px;
+}
+.pw-codigo-icone { font-size: 22px; line-height: 1; }
+.pw-codigo-titulo { color: #e8c87e; font-size: 13px; font-weight: 600; margin: 0 0 3px; }
+.pw-codigo-txt { color: #cdbdf0; font-size: 13px; margin: 0; line-height: 1.5; }
+.pw-codigo-code {
+  display: inline-block; background: #14101f; color: #f0d68a; font-family: monospace;
+  font-size: 15px; letter-spacing: 2px; padding: 2px 10px; border-radius: 6px; border: 1px solid rgba(201,163,92,.5);
+  margin-left: 2px; user-select: all;
+}
+.pw-codigo-nota { color: #8a8298; font-size: 11.5px; text-align: center; line-height: 1.5; margin: 0; }
 
 .ritual { display: flex; flex-direction: column; align-items: center; gap: 34px; padding-top: 50px; min-height: 50vh; }
 .baralho-anim { position: relative; width: 130px; height: 200px; }
