@@ -99,6 +99,16 @@ const PT = {
   erroGuardar: "A leitura foi interpretada mas não ficou guardada: ",
   limiteTit: "Limite semanal atingido",
   limiteTxt: "No plano gratuito tens uma leitura por semana. Próxima leitura disponível:",
+  limiteDia: "Já tiraste a tua Carta do Dia. Volta amanhã — ou passa a Pro para leituras sem limites.",
+  limiteSemana: "Já usaste a tua tiragem de Três Cartas desta semana. Passa a Pro para tiragens ilimitadas.",
+  celtaSoPro: "A Cruz Celta é uma tiragem Pro. Assina para a teres sempre — ou usa a tua oferta de boas-vindas.",
+  proNecessario: "A interpretação com IA é exclusiva do plano Pro.",
+  ofertaUsada: "Já usaste a tua leitura Pro de boas-vindas. Assina o Pro para continuares.",
+  ofertaTitulo: "🎁 A tua oferta de boas-vindas",
+  ofertaTxt: "Tens direito a UMA Cruz Celta completa, com interpretação Pro personalizada ao teu mapa astral. É a experiência completa da Occulta — usa-a quando quiseres, mas só a tens uma vez.",
+  ofertaBtn: "Usar a minha Cruz Celta Pro",
+  freeSemIA: "No plano gratuito vês o significado tradicional de cada carta. A leitura interpretada, tecida ao teu mapa astral, é a magia do Pro.",
+  freeVerPro: "Descobrir o Pro",
   proxDisp: "Próxima leitura grátis:",
   pub: "Publicidade",
   pubTxt: "Espaço de anúncio discreto (AdSense na versão publicada)",
@@ -277,6 +287,11 @@ Sê específico ao que os dados mostram; nunca genérico.`,
 const BR = {
   ...PT,
   mensal: "Occulta Pro",
+  limiteDia: "Você já tirou sua Carta do Dia. Volte amanhã — ou assine o Pro para leituras sem limites.",
+  limiteSemana: "Você já usou sua tiragem de Três Cartas desta semana. Assine o Pro para tiragens ilimitadas.",
+  celtaSoPro: "A Cruz Celta é uma tiragem Pro. Assine para tê-la sempre — ou use sua oferta de boas-vindas.",
+  ofertaTxt: "Você tem direito a UMA Cruz Celta completa, com interpretação Pro personalizada ao seu mapa astral. É a experiência completa da Occulta — use quando quiser, mas só a tem uma vez.",
+  freeSemIA: "No plano gratuito você vê o significado tradicional de cada carta. A leitura interpretada, tecida ao seu mapa astral, é a magia do Pro.",
   mapaComprarBtn: "Desbloquear meu Mapa Natal",
   prevComprarBtn: "Desbloquear minha Previsão Anual",
   addonNotaPro: "Incluído gratuitamente no plano Occulta Pro. Ao pagar, você pode usar um código promocional se tiver um.",
@@ -508,6 +523,16 @@ const EN = {
   erroGuardar: "The reading was interpreted but not saved: ",
   limiteTit: "Weekly limit reached",
   limiteTxt: "The free plan includes one reading per week. Next reading available:",
+  limiteDia: "You've drawn your Card of the Day. Come back tomorrow — or go Pro for unlimited readings.",
+  limiteSemana: "You've used your Three Cards spread this week. Go Pro for unlimited spreads.",
+  celtaSoPro: "The Celtic Cross is a Pro spread. Subscribe to keep it — or use your welcome gift.",
+  proNecessario: "AI interpretation is exclusive to the Pro plan.",
+  ofertaUsada: "You've used your welcome Pro reading. Subscribe to Pro to continue.",
+  ofertaTitulo: "🎁 Your welcome gift",
+  ofertaTxt: "You get ONE full Celtic Cross, with a Pro interpretation personalised to your birth chart. It's the complete Occulta experience — use it whenever you like, but you only get it once.",
+  ofertaBtn: "Use my Pro Celtic Cross",
+  freeSemIA: "On the free plan you see each card's traditional meaning. The woven, chart-personalised reading is the magic of Pro.",
+  freeVerPro: "Discover Pro",
   proxDisp: "Next free reading:",
   pub: "Advertisement",
   pubTxt: "Discreet ad slot (AdSense in the published version)",
@@ -773,11 +798,11 @@ async function dbGuardarAnalise(token, userId, mes, texto) {
   });
 }
 
-async function chamarIA(token, messages, tipo, idioma, cartaIds) {
+async function chamarIA(token, messages, tipo, idioma, cartaIds, extra) {
   const r = await fetch(`${SUPABASE_URL}/functions/v1/interpretar`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ messages, tipo, idioma, carta_ids: cartaIds || [] }),
+    body: JSON.stringify({ messages, tipo, idioma, carta_ids: cartaIds || [], ...(extra || {}) }),
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok || d.error) {
@@ -2252,6 +2277,7 @@ export default function TarotApp() {
   const [aInterpretar, setAInterpretar] = useState(false);
   const [erro, setErro] = useState("");
   const [proximaLeitura, setProximaLeitura] = useState(null); // free: data da próxima leitura
+  const [ofertaDisponivel, setOfertaDisponivel] = useState(false); // free: oferta de boas-vindas (1 Cruz Celta Pro)
 
   const [leituras, setLeituras] = useState([]);
   const [aCarregar, setACarregar] = useState(false);
@@ -2321,17 +2347,13 @@ export default function TarotApp() {
           const cons = await dbGet(sessao.token, "consentimentos?finalidade=eq.marketing_kairos&select=concedido");
           setConsentMarketing(!!cons[0]?.concedido);
         } catch { /* sem consentimento ainda */ }
-        const proAtivo = p[0]?.plano === "pro" || (p[0]?.pro_ate && new Date(p[0].pro_ate) > new Date());
+        const proAtivo = p[0]?.plano === "pro" || p[0]?.acesso_cortesia === true || (p[0]?.pro_ate && new Date(p[0].pro_ate) > new Date());
         if (proAtivo) {
           const ls = await dbGet(sessao.token, "leituras?select=*&order=data.desc");
           setLeituras(ls);
         } else {
-          // free: verificar disponibilidade da leitura semanal
-          const desde = new Date(Date.now() - 7 * 864e5).toISOString();
-          const usos = await dbGet(sessao.token, `uso_ia?tipo=eq.leitura&created_at=gte.${desde}&select=created_at&order=created_at.asc`);
-          if (usos.length >= 1) {
-            setProximaLeitura(new Date(new Date(usos[0].created_at).getTime() + 7 * 864e5));
-          }
+          // free: a oferta de boas-vindas (1 Cruz Celta Pro) está disponível se ainda não foi usada
+          setOfertaDisponivel(p[0]?.oferta_boasvindas_usada === false);
         }
       } catch {
         setErro(L.erroDados);
@@ -2443,8 +2465,23 @@ export default function TarotApp() {
     setProximaLeitura(null);
   }
 
-  function baralharETirar() {
-    if (!ehPro && proximaLeitura && proximaLeitura > new Date()) return;
+  async function baralharETirar() {
+    setErro("");
+    // Pro/cortesia: sem limites. Free: verificar no servidor.
+    if (!ehPro) {
+      try {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/pode_tirar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${sessao.token}` },
+          body: JSON.stringify({ p_tipo: tiragem.id }),
+        });
+        const res = await r.json();
+        if (res === "limite_dia") { setErro(L.limiteDia); return; }
+        if (res === "limite_semana") { setErro(L.limiteSemana); return; }
+        if (res === "so_pro") { setErro(L.celtaSoPro); return; }
+        if (res !== "ok") { setErro(L.erroInterp); return; }
+      } catch (e) { setErro(L.erroInterp); return; }
+    }
     const b = [...BARALHO];
     for (let i = b.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -2463,8 +2500,12 @@ export default function TarotApp() {
 
   useEffect(() => {
     if (todasReveladas && !interpretadoRef.current) {
-      interpretadoRef.current = true;
-      interpretar();
+      // Pro: interpreta sempre. Free: só se for a oferta de boas-vindas (Cruz Celta).
+      const usarOferta = !ehPro && ofertaDisponivel && tiragem.id === "celta";
+      if (ehPro || usarOferta) {
+        interpretadoRef.current = true;
+        interpretar();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todasReveladas]);
@@ -2513,16 +2554,28 @@ ${L.pInstr}`;
   }
 
   async function interpretar() {
+    // FREE: só há interpretação IA através da oferta de boas-vindas (Cruz Celta).
+    // Caso contrário, o free fica só com os significados tradicionais (já visíveis nas cartas).
+    const usarOferta = !ehPro && ofertaDisponivel && tiragem.id === "celta";
+    if (!ehPro && !usarOferta) {
+      // Não interpreta com IA — mostra convite ao Pro
+      setInterpretacao("");
+      return;
+    }
+
     setAInterpretar(true); setErro("");
     try {
-      const texto = await chamarIA(sessao.token, [{ role: "user", content: promptLeitura() }], "leitura", idioma, cartas.map((c) => c.id));
+      const extra = usarOferta ? { oferta_boasvindas: true } : {};
+      const texto = await chamarIA(sessao.token, [{ role: "user", content: promptLeitura() }], "leitura", idioma, cartas.map((c) => c.id), extra);
       setInterpretacao(texto);
-      if (!ehPro) setProximaLeitura(new Date(Date.now() + 7 * 864e5));
+      if (usarOferta) { setOfertaDisponivel(false); }
       if (ehPro) await guardarLeitura(texto);
     } catch (e) {
-      if (e.codigo === "limite_semanal") {
-        setProximaLeitura(e.proxima ? new Date(e.proxima) : null);
-        setErro(`${L.limiteTxt} ${e.proxima ? dataPt(e.proxima, L) : ""}`);
+      if (e.codigo === "oferta_usada") {
+        setOfertaDisponivel(false);
+        setErro(L.ofertaUsada);
+      } else if (e.codigo === "pro_necessario") {
+        setErro(L.proNecessario);
       } else if (e.codigo === "rate_limit") {
         setErro(L.erroRate);
       } else {
@@ -2641,7 +2694,7 @@ ${L.pInstr}`;
   }, [leiturasMes, statsMes, L]);
 
   const maxVert = statsMes.vertentes.length ? statsMes.vertentes[0][1] : 1;
-  const bloqueado = !ehPro && proximaLeitura && proximaLeitura > new Date();
+  const bloqueado = false; // limites agora verificados no servidor ao tirar (pode_tirar)
 
   // Onboarding no primeiro login de cada utilizador
   useEffect(() => {
@@ -2761,21 +2814,10 @@ ${L.pInstr}`;
           {/* ───── NOVA LEITURA ───── */}
           {vista === "nova" && ecra === "inicio" && (
             <main className="painel entra">
-              {bloqueado && (
-                <div className="limite-caixa">
-                  <div className="limite-tit">☾ {L.limiteTit}</div>
-                  <p>{L.proxDisp} <strong>{dataPt(proximaLeitura.toISOString(), L)}</strong></p>
-                  <div className="video-oferta">
-                    <div className="video-oferta-tit">{L.videoTit}</div>
-                    <p>{L.videoTxt}</p>
-                    {videoAReproduzir ? (
-                      <div className="video-a-ver"><span className="lua-spin">☾</span> …</div>
-                    ) : (
-                      <button className="cta pequeno" onClick={verVideoRecompensado}>{L.videoBtn}</button>
-                    )}
-                    <span className="video-indisp">{L.videoIndisp}</span>
-                  </div>
-                  <button className="link" onClick={() => irPara("pro")}>{L.desbloqueia}</button>
+              {!ehPro && ofertaDisponivel && (
+                <div className="oferta-aviso" onClick={() => setTiragemIdx(TIRAGENS.findIndex(t => t.id === "celta"))}>
+                  <span className="oferta-aviso-icone">🎁</span>
+                  <span>{L.ofertaTitulo} — {L.ofertaBtn}</span>
                 </div>
               )}
 
@@ -2867,6 +2909,24 @@ ${L.pInstr}`;
 
               {aInterpretar && (
                 <div className="aLer"><div className="lua-spin">☾</div><p>{L.aLer}</p></div>
+              )}
+
+              {/* FREE: quando as cartas estão reveladas mas não há interpretação IA */}
+              {!ehPro && todasReveladas && !interpretacao && !aInterpretar && !erro && (
+                <>
+                  {ofertaDisponivel && tiragem.id === "celta" ? (
+                    <div className="oferta-bv">
+                      <p className="oferta-bv-titulo">{L.ofertaTitulo}</p>
+                      <p className="oferta-bv-txt">{L.ofertaTxt}</p>
+                      <button className="cta bloco" onClick={interpretar}>{L.ofertaBtn}</button>
+                    </div>
+                  ) : (
+                    <div className="free-sem-ia">
+                      <p className="free-sem-ia-txt">{L.freeSemIA}</p>
+                      <button className="cta bloco" onClick={() => irPara("pro")}>{L.freeVerPro}</button>
+                    </div>
+                  )}
+                </>
               )}
 
               {erro && (
@@ -3504,6 +3564,27 @@ const css = `
 .cf-inv { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: #a0522d; }
 
 .aLer { text-align: center; color: #c9a35c; padding: 18px 0 4px; }
+
+.oferta-bv, .free-sem-ia {
+  text-align: center; border-radius: 16px; padding: 24px 20px; margin: 18px 0;
+}
+.oferta-bv {
+  background: linear-gradient(170deg, rgba(201,163,92,.16), rgba(30,24,48,.55));
+  border: 1px solid rgba(201,163,92,.5); box-shadow: 0 0 0 1px rgba(201,163,92,.2);
+}
+.oferta-bv-titulo { font-family: 'Cormorant Garamond', serif; font-size: 21px; color: #f0d68a; margin-bottom: 8px; }
+.oferta-bv-txt { font-size: 13.5px; color: #cdbdf0; line-height: 1.6; margin-bottom: 16px; }
+.free-sem-ia {
+  background: rgba(30,24,48,.5); border: 1px solid rgba(150,130,200,.22);
+}
+.free-sem-ia-txt { font-size: 13.5px; color: #b3a8cc; line-height: 1.6; margin-bottom: 14px; font-style: italic; }
+.oferta-aviso {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  background: linear-gradient(90deg, rgba(201,163,92,.15), rgba(201,163,92,.05));
+  border: 1px dashed rgba(201,163,92,.55); border-radius: 12px; padding: 12px 16px; margin-bottom: 18px;
+  color: #e8c87e; font-size: 13px;
+}
+.oferta-aviso-icone { font-size: 20px; }
 .lua-spin { font-size: 30px; animation: girar 2.4s linear infinite; display: inline-block; }
 @keyframes girar { to { transform: rotate(360deg); } }
 .aLer p { font-family: 'Cormorant Garamond', serif; font-size: 19px; font-style: italic; margin-top: 6px; }
