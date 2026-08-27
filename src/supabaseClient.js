@@ -31,10 +31,12 @@ export const supabase = {
   // Auth
   auth: {
     async signUp({ email, password, options }) {
+      const corpo = { email, password, data: options?.data || {} };
+      if (options?.captchaToken) corpo.gotrue_meta_security = { captcha_token: options.captchaToken };
       const r = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
         method: "POST",
         headers: cabecalhos(),
-        body: JSON.stringify({ email, password, data: options?.data || {} }),
+        body: JSON.stringify(corpo),
       });
       const d = await r.json();
       if (!r.ok) return { data: null, error: { message: d.msg || d.error_description || "Erro no registo" } };
@@ -42,11 +44,13 @@ export const supabase = {
       return { data: { session: d.access_token ? { access_token: d.access_token, user: d.user } : null, user: d.user }, error: null };
     },
 
-    async signInWithPassword({ email, password }) {
+    async signInWithPassword({ email, password, options }) {
+      const corpo = { email, password };
+      if (options?.captchaToken) corpo.gotrue_meta_security = { captcha_token: options.captchaToken };
       const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
         method: "POST",
         headers: cabecalhos(),
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(corpo),
       });
       const d = await r.json();
       if (!r.ok) return { data: null, error: { message: d.error_description || d.msg || "Credenciais inválidas" } };
