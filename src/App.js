@@ -3,11 +3,17 @@ import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabaseClient";
 
 /* ─────────── CONFIG ─────────── */
 
-// Links de pagamento Stripe — preencher no .env ou variáveis Vercel
+// Links de pagamento Stripe — preencher nas variáveis de ambiente da Vercel
+// PENDENTE: substituir pelos links LIVE quando a conta Stripe estiver ativada.
 const STRIPE_LINK_MENSAL = process.env.REACT_APP_STRIPE_MENSAL || "https://buy.stripe.com/test_8x24gA4ve9JQaOG6c8ds400";
 const STRIPE_LINK_ANUAL = process.env.REACT_APP_STRIPE_ANUAL || "https://buy.stripe.com/SUBSTITUIR_ANUAL";
+const STRIPE_LINK_MAPA = process.env.REACT_APP_STRIPE_MAPA || "https://buy.stripe.com/SUBSTITUIR_MAPA";
+const STRIPE_LINK_PREVISAO = process.env.REACT_APP_STRIPE_PREVISAO || "https://buy.stripe.com/SUBSTITUIR_PREVISAO";
 const STRIPE_PORTAL = process.env.REACT_APP_STRIPE_PORTAL || "https://billing.stripe.com/p/login/SUBSTITUIR_PORTAL";
 const CODIGO_LANCAMENTO = "Occulta26";
+
+// Ajuda: um link Stripe está "pronto" se não contém SUBSTITUIR
+const linkPronto = (url) => url && url.indexOf("SUBSTITUIR") === -1;
 
 /* ─────────── i18n ─────────── */
 
@@ -44,6 +50,10 @@ const PT = {
   mapaSub: "O céu no instante em que nasceste",
   mapaIntro: "O teu mapa natal é o retrato astrológico único do momento do teu nascimento — os planetas, as casas e os aspetos que moldam quem és. Gera o teu agora.",
   mapaGerar: "Gerar o meu mapa natal",
+  mapaComprar: "O teu Mapa Natal completo: os dez planetas, casas, Nodo e aspetos, com uma interpretação profunda. Uma leitura do teu céu de nascimento, para guardares.",
+  mapaComprarBtn: "Desbloquear o meu Mapa Natal",
+  prevComprarBtn: "Desbloquear a minha Previsão Anual",
+  addonNotaPro: "Incluído gratuitamente no plano Occulta Pro. Ao pagar, podes usar um código promocional se tiveres um.",
   mapaGerando: "A ler o céu do teu nascimento... isto pode demorar um momento.",
   mapaSemPerfil: "Preenche a tua data, hora e local de nascimento no perfil para gerar o mapa natal. A hora exata é essencial para as casas e o Ascendente.",
   mapaErro: "Não foi possível gerar o mapa. Tenta de novo.",
@@ -267,6 +277,9 @@ Sê específico ao que os dados mostram; nunca genérico.`,
 const BR = {
   ...PT,
   mensal: "Occulta Pro",
+  mapaComprarBtn: "Desbloquear meu Mapa Natal",
+  prevComprarBtn: "Desbloquear minha Previsão Anual",
+  addonNotaPro: "Incluído gratuitamente no plano Occulta Pro. Ao pagar, você pode usar um código promocional se tiver um.",
   codigoTxt: "Ao pagar, digite este código para ter o preço de fundador:",
   codigoNota: "Digite o código na página de pagamento, no campo \"Adicionar código promocional\". Sem o código, o valor será o normal (12,99€).",
   apoioTxt: "Precisa de ajuda ou encontrou um problema? Fale com a gente — estamos aqui para você.",
@@ -446,6 +459,10 @@ const EN = {
   mapaSub: "The sky at the moment you were born",
   mapaIntro: "Your birth chart is the unique astrological portrait of your moment of birth — the planets, houses and aspects that shape who you are. Generate yours now.",
   mapaGerar: "Generate my birth chart",
+  mapaComprar: "Your full Birth Chart: the ten planets, houses, Node and aspects, with a deep interpretation. A reading of your natal sky, to keep.",
+  mapaComprarBtn: "Unlock my Birth Chart",
+  prevComprarBtn: "Unlock my Yearly Forecast",
+  addonNotaPro: "Included free with Occulta Pro. At checkout, you can use a promo code if you have one.",
   mapaGerando: "Reading the sky of your birth... this may take a moment.",
   mapaSemPerfil: "Fill in your birth date, time and place in your profile to generate the chart. The exact time is essential for the houses and Ascendant.",
   mapaErro: "Could not generate the chart. Please try again.",
@@ -1190,6 +1207,7 @@ function EcraPrevisaoAnual({ L, sessao, idioma, perfil }) {
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState("");
   const ano = new Date().getFullYear();
+  const ref = sessao?.user?.id ? `?client_reference_id=${sessao.user.id}` : "";
 
   useEffect(() => {
     (async () => {
@@ -1241,7 +1259,12 @@ function EcraPrevisaoAnual({ L, sessao, idioma, perfil }) {
         <div className="mapa-inicio">
           <div className="mapa-simbolo">☉</div>
           <p className="mapa-intro">{L.prevComprar}</p>
-          <button className="cta" onClick={() => window.dispatchEvent(new CustomEvent("ir-pro"))}>{L.prevVerPlanos}</button>
+          {linkPronto(STRIPE_LINK_PREVISAO) ? (
+            <a className="cta bloco" href={`${STRIPE_LINK_PREVISAO}${ref}`} target="_blank" rel="noreferrer">{L.prevComprarBtn} · 5,99€</a>
+          ) : (
+            <button className="cta" onClick={() => window.dispatchEvent(new CustomEvent("ir-pro"))}>{L.prevVerPlanos}</button>
+          )}
+          <p className="addon-nota-pro">{L.addonNotaPro}</p>
         </div>
       )}
 
@@ -1289,6 +1312,7 @@ function EcraMapaNatal({ L, sessao, idioma, perfil, ehPro }) {
   const [erro, setErro] = useState("");
 
   const perfilCompleto = perfil?.data_nascimento && perfil?.hora_nascimento && perfil?.local_nascimento;
+  const ref = sessao?.user?.id ? `?client_reference_id=${sessao.user.id}` : "";
 
   useEffect(() => {
     // tentar carregar mapa já guardado
@@ -1313,7 +1337,10 @@ function EcraMapaNatal({ L, sessao, idioma, perfil, ehPro }) {
         body: JSON.stringify({ idioma }),
       });
       const d = await r.json();
-      if (!r.ok) { setErro(d?.error || L.mapaErro); setEstado("erro"); return; }
+      if (!r.ok) {
+        if (d?.codigo === "compra_necessaria") { setEstado("comprar"); return; }
+        setErro(d?.error || L.mapaErro); setEstado("erro"); return;
+      }
       setMapa(d.mapa); setTexto(d.interpretacao); setEstado("pronto");
     } catch (e) { setErro(L.mapaErro); setEstado("erro"); }
   }
@@ -1338,6 +1365,19 @@ function EcraMapaNatal({ L, sessao, idioma, perfil, ehPro }) {
       {estado === "semperfil" && (
         <div className="mapa-inicio">
           <p className="mapa-intro">{L.mapaSemPerfil}</p>
+        </div>
+      )}
+
+      {estado === "comprar" && (
+        <div className="mapa-inicio">
+          <div className="mapa-simbolo">✧</div>
+          <p className="mapa-intro">{L.mapaComprar}</p>
+          {linkPronto(STRIPE_LINK_MAPA) ? (
+            <a className="cta bloco" href={`${STRIPE_LINK_MAPA}${ref}`} target="_blank" rel="noreferrer">{L.mapaComprarBtn} · 7,99€</a>
+          ) : (
+            <button className="cta" onClick={() => window.dispatchEvent(new CustomEvent("ir-pro"))}>{L.prevVerPlanos}</button>
+          )}
+          <p className="addon-nota-pro">{L.addonNotaPro}</p>
         </div>
       )}
 
