@@ -2314,7 +2314,7 @@ export default function TarotApp() {
 
   const [sessao, setSessao] = useState(null);
   const [perfil, setPerfil] = useState(null);
-  const ehPro = perfil?.plano === "pro" || (perfil?.pro_ate && new Date(perfil.pro_ate) > new Date());
+  const ehPro = perfil?.plano === "pro" || perfil?.acesso_cortesia === true || (perfil?.pro_ate && new Date(perfil.pro_ate) > new Date());
 
   const [vista, setVista] = useState("nova"); // nova | historico | relatorio | pro
   const [mostrarOnboarding, setMostrarOnboarding] = useState(false);
@@ -2394,7 +2394,7 @@ export default function TarotApp() {
     setACarregar(true);
     (async () => {
       try {
-        const p = await dbGet(sessao.token, "profiles?select=plano,nome,data_nascimento,hora_nascimento,local_nascimento,signo,genero,profissao,pro_ate,codigo_convite");
+        const p = await dbGet(sessao.token, "profiles?select=plano,acesso_cortesia,oferta_boasvindas_usada,nome,data_nascimento,hora_nascimento,local_nascimento,signo,genero,profissao,pro_ate,codigo_convite");
         setPerfil(p[0] || null);
         try {
           const cons = await dbGet(sessao.token, "consentimentos?finalidade=eq.marketing_kairos&select=concedido");
