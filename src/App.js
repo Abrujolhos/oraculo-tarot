@@ -2394,7 +2394,12 @@ export default function TarotApp() {
     setACarregar(true);
     (async () => {
       try {
-        const p = await dbGet(sessao.token, "profiles?select=plano,acesso_cortesia,oferta_boasvindas_usada,nome,data_nascimento,hora_nascimento,local_nascimento,signo,genero,profissao,pro_ate,codigo_convite");
+        let p = await dbGet(sessao.token, "profiles?select=plano,acesso_cortesia,oferta_boasvindas_usada,nome,data_nascimento,hora_nascimento,local_nascimento,signo,genero,profissao,pro_ate,codigo_convite");
+        // Se veio vazio (RLS/token), tentar uma segunda vez antes de desistir
+        if (!Array.isArray(p) || p.length === 0) {
+          await new Promise((r) => setTimeout(r, 400));
+          p = await dbGet(sessao.token, "profiles?select=plano,acesso_cortesia,oferta_boasvindas_usada,nome,data_nascimento,hora_nascimento,local_nascimento,signo,genero,profissao,pro_ate,codigo_convite");
+        }
         setPerfil(p[0] || null);
         try {
           const cons = await dbGet(sessao.token, "consentimentos?finalidade=eq.marketing_kairos&select=concedido");

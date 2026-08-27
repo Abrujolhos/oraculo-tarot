@@ -1,5 +1,5 @@
-// v4 — cache mínimo, sempre rede primeiro. Resolve versões presas em cache.
-const CACHE = "occulta-v4";
+// v5 — cache mínimo, sempre rede primeiro. Resolve versões presas em cache.
+const CACHE = "occulta-v5";
 
 self.addEventListener("install", () => {
   self.skipWaiting(); // ativa imediatamente a nova versão
