@@ -1651,11 +1651,19 @@ function EcraAuth({ onSessao, L }) {
 
   async function submeter() {
     if (!email.trim() || !password) { setMsg({ tipo: "erro", txt: L.preenche }); return; }
-    if (!captchaToken) { setMsg({ tipo: "erro", txt: L.captchaFalta }); return; }
+    // Ler o token diretamente do widget (mais fiável que o estado React)
+    let token = captchaToken;
+    try {
+      if (window.turnstile && widgetIdRef.current !== null) {
+        const t = window.turnstile.getResponse(widgetIdRef.current);
+        if (t) token = t;
+      }
+    } catch (e) { /* usa o do estado */ }
+    if (!token) { setMsg({ tipo: "erro", txt: L.captchaFalta }); return; }
     setOcupado(true); setMsg(null);
     try {
       if (modo === "registar") {
-        const d = await authRegistar(email.trim(), password, nome.trim(), captchaToken);
+        const d = await authRegistar(email.trim(), password, nome.trim(), token);
         const codConvite = new URLSearchParams(window.location.search).get("convite");
         if (codConvite && d.session) {
           try {
@@ -1669,7 +1677,7 @@ function EcraAuth({ onSessao, L }) {
         if (d.session) onSessao({ token: d.session.access_token, user: d.session.user });
         else { setMsg({ tipo: "info", txt: L.contaCriada }); setModo("entrar"); }
       } else {
-        const d = await authEntrar(email.trim(), password, captchaToken);
+        const d = await authEntrar(email.trim(), password, token);
         onSessao({ token: d.session.access_token, user: d.session.user });
       }
     } catch (e) {
