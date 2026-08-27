@@ -11,6 +11,8 @@ const STRIPE_LINK_MAPA = process.env.REACT_APP_STRIPE_MAPA || "https://buy.strip
 const STRIPE_LINK_PREVISAO = process.env.REACT_APP_STRIPE_PREVISAO || "https://buy.stripe.com/SUBSTITUIR_PREVISAO";
 const STRIPE_PORTAL = process.env.REACT_APP_STRIPE_PORTAL || "https://billing.stripe.com/p/login/SUBSTITUIR_PORTAL";
 const CODIGO_LANCAMENTO = "Occulta26";
+// Cloudflare Turnstile (CAPTCHA) — site key pública
+const TURNSTILE_SITE_KEY = process.env.REACT_APP_TURNSTILE_KEY || "0x4AAAAAAEd4frpyAQnHM3hX";
 
 // Ajuda: um link Stripe está "pronto" se não contém SUBSTITUIR
 const linkPronto = (url) => url && url.indexOf("SUBSTITUIR") === -1;
@@ -24,6 +26,7 @@ const PT = {
   entrar: "Entrar", registar: "Registar", nomePH: "O teu nome",
   passVer: "Mostrar palavra-passe", passOcultar: "Ocultar palavra-passe", passPH: "Palavra-passe (mín. 6 caracteres)",
   preenche: "Preenche o email e a palavra-passe.",
+  captchaFalta: "Confirma que não és um robô antes de continuar.",
   contaCriada: "Conta criada! Verifica o teu email para confirmar e depois entra.",
   momento: "Um momento…", criarConta: "Criar conta", sair: "Sair",
   tabLeitura: "✦ Leitura", tabHist: "☾ Histórico", tabRel: "◐ Relatório",
@@ -381,6 +384,7 @@ const BR = {
   authSub: "Suas leituras, só suas, em segurança.",
   nomePH: "Seu nome", passVer: "Mostrar senha", passOcultar: "Ocultar senha", passPH: "Senha (mín. 6 caracteres)",
   preenche: "Preencha o email e a senha.",
+  captchaFalta: "Confirme que não é um robô antes de continuar.",
   contaCriada: "Conta criada! Verifique seu email para confirmar e depois entre.",
   perguntaPH: "Ex.: Devo avançar com o novo projeto este mês?",
   invDesc: "Quando viradas, são lidas como energia bloqueada ou interna",
@@ -448,6 +452,7 @@ const EN = {
   entrar: "Sign in", registar: "Sign up", nomePH: "Your name",
   passVer: "Show password", passOcultar: "Hide password", passPH: "Password (min. 6 characters)",
   preenche: "Please fill in email and password.",
+  captchaFalta: "Please confirm you're not a robot before continuing.",
   contaCriada: "Account created! Check your email to confirm, then sign in.",
   momento: "One moment…", criarConta: "Create account", sair: "Sign out",
   tabLeitura: "✦ Reading", tabHist: "☾ History", tabRel: "◐ Report",
@@ -731,16 +736,16 @@ function construirBaralho(L) {
 
 // ─── Supabase SDK helpers ───
 
-async function authRegistar(email, password, nome) {
+async function authRegistar(email, password, nome, captchaToken) {
   const { data, error } = await supabase.auth.signUp({
-    email, password, options: { data: { nome } }
+    email, password, options: { data: { nome }, captchaToken }
   });
   if (error) throw new Error(error.message);
   return data;
 }
 
-async function authEntrar(email, password) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+async function authEntrar(email, password, captchaToken) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } });
   if (error) throw new Error(error.message);
   return data;
 }
@@ -1605,14 +1610,52 @@ function EcraAuth({ onSessao, L }) {
   const [verPass, setVerPass] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaRef = useRef(null);
+  const widgetIdRef = useRef(null);
+
+  // Carregar o script do Turnstile uma vez
+  useEffect(() => {
+    if (window.turnstile) return;
+    const s = document.createElement("script");
+    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    s.async = true; s.defer = true;
+    document.head.appendChild(s);
+  }, []);
+
+  // Renderizar o widget quando o container e o script estiverem prontos
+  useEffect(() => {
+    let cancelado = false;
+    function tentarRenderizar() {
+      if (cancelado) return;
+      if (window.turnstile && captchaRef.current && widgetIdRef.current === null) {
+        widgetIdRef.current = window.turnstile.render(captchaRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          callback: (token) => setCaptchaToken(token),
+          "expired-callback": () => setCaptchaToken(""),
+          "error-callback": () => setCaptchaToken(""),
+          theme: "dark",
+        });
+      } else if (!window.turnstile) {
+        setTimeout(tentarRenderizar, 400);
+      }
+    }
+    tentarRenderizar();
+    return () => { cancelado = true; };
+  }, []);
+
+  function resetCaptcha() {
+    setCaptchaToken("");
+    try { if (window.turnstile && widgetIdRef.current !== null) window.turnstile.reset(widgetIdRef.current); } catch (e) { /* */ }
+  }
 
   async function submeter() {
     if (!email.trim() || !password) { setMsg({ tipo: "erro", txt: L.preenche }); return; }
+    if (!captchaToken) { setMsg({ tipo: "erro", txt: L.captchaFalta }); return; }
     setOcupado(true); setMsg(null);
     try {
       if (modo === "registar") {
-        const d = await authRegistar(email.trim(), password, nome.trim());
-        // Se veio com código de convite no link, regista-o
+        const d = await authRegistar(email.trim(), password, nome.trim(), captchaToken);
         const codConvite = new URLSearchParams(window.location.search).get("convite");
         if (codConvite && d.session) {
           try {
@@ -1626,11 +1669,12 @@ function EcraAuth({ onSessao, L }) {
         if (d.session) onSessao({ token: d.session.access_token, user: d.session.user });
         else { setMsg({ tipo: "info", txt: L.contaCriada }); setModo("entrar"); }
       } else {
-        const d = await authEntrar(email.trim(), password);
+        const d = await authEntrar(email.trim(), password, captchaToken);
         onSessao({ token: d.session.access_token, user: d.session.user });
       }
     } catch (e) {
       setMsg({ tipo: "erro", txt: e.message });
+      resetCaptcha(); // token só serve uma vez; renovar após tentativa
     } finally { setOcupado(false); }
   }
 
@@ -1657,6 +1701,7 @@ function EcraAuth({ onSessao, L }) {
             aria-label={verPass ? L.passOcultar : L.passVer}>{verPass ? "🙈" : "👁"}</button>
         </div>
         {msg && <p className={`auth-msg ${msg.tipo}`}>{msg.txt}</p>}
+        <div className="captcha-wrap" ref={captchaRef}></div>
         <button className="cta" onClick={submeter} disabled={ocupado}>
           {ocupado ? L.momento : modo === "entrar" ? L.entrar : L.criarConta}
         </button>
@@ -3309,6 +3354,7 @@ const css = `
 .painel { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 26px; }
 
 .auth-painel { padding-top: 8px; }
+.captcha-wrap { display: flex; justify-content: center; margin: 4px 0 10px; min-height: 65px; }
 .auth-caixa {
   background: rgba(28,22,46,.72); backdrop-filter: blur(6px);
   border: 1px solid rgba(201,163,92,.3); border-radius: 16px;
