@@ -60,6 +60,27 @@ export const supabase = {
     },
 
     async getSession() {
+      // Primeiro: verificar se voltámos de um link de confirmação de email
+      // (o Supabase devolve o token no hash do URL: #access_token=...)
+      try {
+        const hash = window.location.hash;
+        if (hash && hash.includes("access_token=")) {
+          const params = new URLSearchParams(hash.slice(1));
+          const at = params.get("access_token");
+          if (at) {
+            // Obter os dados do utilizador com este token
+            const ru = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: cabecalhos(at) });
+            if (ru.ok) {
+              const user = await ru.json();
+              guardarSessao({ token: at, user });
+              // Limpar o hash do URL para não reprocessar
+              window.history.replaceState(null, "", window.location.pathname + window.location.search);
+              return { data: { session: { access_token: at, user } } };
+            }
+          }
+        }
+      } catch (e) { /* segue para sessão guardada */ }
+
       const sessao = lerSessao();
       if (!sessao) return { data: { session: null } };
       // Verificar se o token ainda é válido
