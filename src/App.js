@@ -13,6 +13,8 @@ const STRIPE_PORTAL = process.env.REACT_APP_STRIPE_PORTAL || "https://billing.st
 const CODIGO_LANCAMENTO = "Occulta26";
 // Cloudflare Turnstile (CAPTCHA) — site key pública
 const TURNSTILE_SITE_KEY = process.env.REACT_APP_TURNSTILE_KEY || "0x4AAAAAAEd4frpyAQnHM3hX";
+// Imagens das cartas (Supabase Storage, bucket público "cartas")
+const CARTAS_URL = "https://ditjofmxqjcgtmwghhdb.supabase.co/storage/v1/object/public/cartas";
 
 // Ajuda: um link Stripe está "pronto" se não contém SUBSTITUIR
 const linkPronto = (url) => url && url.indexOf("SUBSTITUIR") === -1;
@@ -1107,8 +1109,15 @@ function Carta({ carta, revelada, onClick, compacta, L }) {
       <div className={`carta-inner ${revelada ? "flipped" : ""}`}>
         <div className="carta-face carta-verso"><VersoCarta /><div className="brilho" /></div>
         <div className={`carta-face carta-frente ${carta.invertida ? "invertida" : ""}`}>
-          <MolduraFrente maior={carta.maior} />
-          <div className="cf-conteudo">
+          <img
+            className="cf-imagem"
+            src={`${CARTAS_URL}/${carta.id}.jpg`}
+            alt={carta.nome}
+            loading="lazy"
+            onError={(e) => { e.target.style.display = "none"; if (e.target.nextSibling) e.target.nextSibling.style.display = "flex"; }}
+          />
+          <div className="cf-conteudo cf-fallback" style={{ display: "none" }}>
+            <MolduraFrente maior={carta.maior} />
             <div className="cf-marca">{carta.marca}</div>
             <div className="cf-icone"><Icone naipe={carta.naipe} size={compacta ? 18 : 26} /></div>
             <div className="cf-nome">{carta.nome}</div>
@@ -3603,9 +3612,10 @@ const css = `
 @keyframes brilhar { 0%, 60% { transform: translateX(-120%); } 80%, 100% { transform: translateX(120%); } }
 .carta-frente {
   transform: rotateY(180deg);
-  background: linear-gradient(165deg, #f5eedd, #e6d9bd);
-  border: 1px solid #c9a35c;
+  background: #0d1120;
+  border: none;
   display: flex; align-items: center; justify-content: center; color: #2a2138;
+  overflow: hidden;
 }
 .aura {
   position: absolute; inset: -10px; border-radius: 16px; pointer-events: none;
@@ -3613,6 +3623,8 @@ const css = `
   animation: aurear 1.3s ease-out both; animation-delay: .35s;
 }
 @keyframes aurear { from { opacity: 0; transform: scale(.8); } 40% { opacity: 1; } to { opacity: 0; transform: scale(1.25); } }
+.cf-imagem { width: 100%; height: 100%; object-fit: cover; display: block; }
+.carta-frente.invertida .cf-imagem { transform: rotate(180deg); }
 .cf-conteudo { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; padding: 14px 12px; }
 .carta-frente.invertida .cf-conteudo, .carta-frente.invertida > svg { transform: rotate(180deg); }
 .cf-marca { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; color: #8a6a2e; letter-spacing: 2px; }
