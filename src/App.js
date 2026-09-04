@@ -100,7 +100,11 @@ const PT = {
   reanalisar: "A reanalisar…", gerarAnalise: "Gerar análise global do mês",
   analisando: "A analisar o teu mês…",
   erroDados: "Não foi possível carregar os teus dados.",
-  erroInterp: "Não foi possível obter a interpretação. Tenta novamente.",
+  erroInterp: "O oráculo hesitou. Podes tentar refazer a leitura.",
+  refazer: "Refazer leitura",
+  leituraFalhou3: "O oráculo está em silêncio neste momento. Já registámos o problema e a nossa equipa vai verificar. Tenta mais tarde.",
+  fairUse: "Atingiste o limite de leituras deste mês. Volta no próximo mês.",
+  ampliar: "Ver em grande",
   erroGuardar: "A leitura foi interpretada mas não ficou guardada: ",
   limiteTit: "Limite semanal atingido",
   limiteTxt: "No plano gratuito tens uma leitura por semana. Próxima leitura disponível:",
@@ -441,7 +445,11 @@ const BR = {
   histPro: "No Pro, todas as leituras ficam salvas com títulos, notas pessoais e busca.",
   relPro: "No Pro você tem o relatório mensal: estatísticas, cartas recorrentes e análise global por IA.",
   erroDados: "Não foi possível carregar seus dados.",
-  erroInterp: "Não foi possível obter a interpretação. Tente novamente.",
+  erroInterp: "O oráculo hesitou. Você pode tentar refazer a leitura.",
+  refazer: "Refazer leitura",
+  leituraFalhou3: "O oráculo está em silêncio neste momento. Já registramos o problema e nossa equipe vai verificar. Tente mais tarde.",
+  fairUse: "Você atingiu o limite de leituras deste mês. Volte no próximo mês.",
+  ampliar: "Ver grande",
   erroGuardar: "A leitura foi interpretada mas não ficou salva: ",
   semPergunta: "(sem pergunta específica — leitura geral nesta vertente)",
   pInstr: PT.pInstr.replaceAll("Sê específico", "Seja específico").replaceAll("escreve", "escreva").replaceAll("Não uses", "Não use"),
@@ -526,7 +534,11 @@ const EN = {
   reanalisar: "Reanalyzing…", gerarAnalise: "Generate monthly analysis",
   analisando: "Analyzing your month…",
   erroDados: "Couldn't load your data.",
-  erroInterp: "Couldn't get the interpretation. Please try again.",
+  erroInterp: "The oracle hesitated. You can try the reading again.",
+  refazer: "Redo reading",
+  leituraFalhou3: "The oracle is silent right now. We've logged the issue and our team will look into it. Please try later.",
+  fairUse: "You've reached this month's reading limit. Come back next month.",
+  ampliar: "View large",
   erroGuardar: "The reading was interpreted but not saved: ",
   limiteTit: "Weekly limit reached",
   limiteTxt: "The free plan includes one reading per week. Next reading available:",
@@ -1100,7 +1112,7 @@ function Ceu() {
   );
 }
 
-function Carta({ carta, revelada, onClick, compacta, L }) {
+function Carta({ carta, revelada, onClick, compacta, L, onAmpliar }) {
   return (
     <div className={`carta-wrap ${compacta ? "compacta" : ""}`}
       onClick={onClick} role="button" tabIndex={0}
@@ -1124,6 +1136,9 @@ function Carta({ carta, revelada, onClick, compacta, L }) {
             <div className="cf-sub">{carta.sub}</div>
           </div>
           {carta.invertida && <div className="cf-inv">{L.invertida}</div>}
+          {revelada && onAmpliar && (
+            <button className="cf-lupa" onClick={(e) => { e.stopPropagation(); onAmpliar(carta); }} aria-label={L.ampliar || "Ampliar"}>⛶</button>
+          )}
         </div>
       </div>
       {revelada && <div className="aura" />}
@@ -2340,6 +2355,9 @@ export default function TarotApp() {
   const [erro, setErro] = useState("");
   const [proximaLeitura, setProximaLeitura] = useState(null); // free: data da próxima leitura
   const [ofertaDisponivel, setOfertaDisponivel] = useState(false); // free: oferta de boas-vindas (1 Cruz Celta Pro)
+  const [cartaAmpliada, setCartaAmpliada] = useState(null); // lightbox: carta a mostrar em grande
+  const [falhasLeitura, setFalhasLeitura] = useState(0); // contador de falhas do modelo (máx 3)
+  const [leituraBloqueada, setLeituraBloqueada] = useState(false); // bloqueia refazer após 3 falhas
 
   const [leituras, setLeituras] = useState([]);
   const [aCarregar, setACarregar] = useState(false);
@@ -2635,6 +2653,7 @@ ${L.pInstr}`;
       const extra = usarOferta ? { oferta_boasvindas: true } : {};
       const texto = await chamarIA(sessao.token, [{ role: "user", content: promptLeitura() }], "leitura", idioma, cartas.map((c) => c.id), extra);
       setInterpretacao(texto);
+      setFalhasLeitura(0); setLeituraBloqueada(false); // sucesso: repõe o contador
       if (usarOferta) { setOfertaDisponivel(false); }
       if (ehPro) await guardarLeitura(texto);
     } catch (e) {
@@ -2645,13 +2664,25 @@ ${L.pInstr}`;
         setErro(L.proNecessario);
       } else if (e.codigo === "rate_limit") {
         setErro(L.erroRate);
+      } else if (e.codigo === "fair_use") {
+        setErro(L.fairUse);
       } else {
-        setErro(e.message || L.erroInterp);
+        // Erro do modelo/sistema: conta a falha e permite refazer até 3x
+        const n = falhasLeitura + 1;
+        setFalhasLeitura(n);
+        if (n >= 3) { setLeituraBloqueada(true); setErro(L.leituraFalhou3); }
+        else { setErro(L.erroInterp); }
       }
       interpretadoRef.current = false;
     } finally {
       setAInterpretar(false);
     }
+  }
+
+  async function refazerLeitura() {
+    if (leituraBloqueada || aInterpretar) return;
+    interpretadoRef.current = true;
+    await interpretar();
   }
 
   async function guardarLeitura(texto) {
@@ -2959,7 +2990,7 @@ ${L.pInstr}`;
               <div className={`mesa ${tiragem.id}`}>
                 {cartas.map((c, i) => (
                   <div className="posto" key={c.id} style={{ "--deal": `${i * 130}ms` }}>
-                    <Carta carta={c} revelada={reveladas[i]} compacta={tiragem.pos.length > 3} onClick={() => revelar(i)} L={L} />
+                    <Carta carta={c} revelada={reveladas[i]} compacta={tiragem.pos.length > 3} onClick={() => revelar(i)} L={L} onAmpliar={setCartaAmpliada} />
                     <div className="posto-rotulo">
                       <span className="posto-num">{cartas.length > 1 ? i + 1 : "✶"}</span>
                       {tiragem.pos[i].split(" — ")[0]}
@@ -2973,6 +3004,19 @@ ${L.pInstr}`;
                   </div>
                 ))}
               </div>
+
+              {cartaAmpliada && (
+                <div className="lightbox" onClick={() => setCartaAmpliada(null)}>
+                  <button className="lightbox-fechar" aria-label="Fechar" onClick={() => setCartaAmpliada(null)}>✕</button>
+                  <img
+                    className={`lightbox-img ${cartaAmpliada.invertida ? "invertida" : ""}`}
+                    src={`${CARTAS_URL}/${cartaAmpliada.id}.jpg`}
+                    alt={cartaAmpliada.nome}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <p className="lightbox-nome">{cartaAmpliada.nome}{cartaAmpliada.invertida ? ` · ${L.invertida}` : ""}</p>
+                </div>
+              )}
 
               {aInterpretar && (
                 <div className="aLer"><div className="lua-spin">☾</div><p>{L.aLer}</p></div>
@@ -2998,8 +3042,13 @@ ${L.pInstr}`;
 
               {erro && (
                 <div className="erro"><p>{erro}</p>
-                  {!interpretacao && !bloqueado && <button className="cta pequeno" onClick={interpretar}>{L.tentar}</button>}
-                  {bloqueado && <button className="cta pequeno" onClick={() => irPara("pro")}>{L.desbloqueia}</button>}
+                  {/* Refazer só quando foi falha do modelo, não bloqueada, e é uma leitura que usa IA */}
+                  {!interpretacao && !leituraBloqueada && (ehPro || (ofertaDisponivel && tiragem.id === "celta")) && falhasLeitura > 0 && falhasLeitura < 3 && (
+                    <button className="cta pequeno refazer" onClick={refazerLeitura} disabled={aInterpretar}>
+                      ↻ {L.refazer} ({3 - falhasLeitura})
+                    </button>
+                  )}
+                  {leituraBloqueada && <p className="erro-bloqueado">{L.leituraFalhou3}</p>}
                 </div>
               )}
 
@@ -3597,8 +3646,16 @@ const css = `
 .posto-rotulo { font-size: 11.5px; letter-spacing: 1px; text-transform: uppercase; color: #8d83a5; text-align: center; max-width: 112px; line-height: 1.35; }
 .posto-num { display: inline-block; color: #c9a35c; margin-right: 5px; font-family: 'Cormorant Garamond', serif; font-size: 14px; }
 
-.carta-wrap { position: relative; width: 128px; height: 205px; perspective: 1000px; cursor: pointer; }
-.carta-wrap.compacta { width: 96px; height: 154px; }
+.carta-wrap { position: relative; width: 150px; height: 248px; perspective: 1000px; cursor: pointer; }
+.carta-wrap.compacta { width: 104px; height: 172px; }
+/* Ecrãs médios/grandes (PC): cartas maiores para ver os pormenores */
+@media (min-width: 768px) {
+  .carta-wrap { width: 200px; height: 330px; }
+  .carta-wrap.compacta { width: 132px; height: 218px; }
+}
+@media (min-width: 1200px) {
+  .carta-wrap { width: 230px; height: 380px; }
+}
 .carta-wrap:hover .carta-inner:not(.flipped) { transform: translateY(-6px); }
 .carta-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.35,.05,.25,1); }
 .carta-inner.flipped { transform: rotateY(180deg); }
@@ -3623,7 +3680,30 @@ const css = `
   animation: aurear 1.3s ease-out both; animation-delay: .35s;
 }
 @keyframes aurear { from { opacity: 0; transform: scale(.8); } 40% { opacity: 1; } to { opacity: 0; transform: scale(1.25); } }
-.cf-imagem { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cf-imagem { width: 100%; height: 100%; object-fit: contain; display: block; background: #0d1120; }
+.cf-lupa {
+  position: absolute; bottom: 8px; right: 8px; z-index: 3;
+  width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(240,214,138,.6);
+  background: rgba(13,17,32,.7); color: #f0d68a; font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px);
+}
+.cf-lupa:hover { background: rgba(201,163,92,.35); }
+.lightbox {
+  position: fixed; inset: 0; z-index: 2000; background: rgba(8,6,16,.92);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 24px; animation: lbfade .2s ease-out;
+}
+@keyframes lbfade { from { opacity: 0; } to { opacity: 1; } }
+.lightbox-img { max-width: min(90vw, 460px); max-height: 78vh; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.7); }
+.lightbox-img.invertida { transform: rotate(180deg); }
+.lightbox-nome { color: #f0d68a; font-family: 'Cormorant Garamond', serif; font-size: 20px; letter-spacing: 1px; }
+.lightbox-fechar {
+  position: absolute; top: 18px; right: 20px; width: 42px; height: 42px; border-radius: 50%;
+  border: 1px solid rgba(240,214,138,.4); background: rgba(13,17,32,.6); color: #f0d68a;
+  font-size: 20px; cursor: pointer;
+}
+.refazer { background: rgba(201,163,92,.15); border: 1px solid rgba(201,163,92,.5); }
+.erro-bloqueado { color: #b3a8cc; font-size: 13px; margin-top: 6px; font-style: italic; }
 .carta-frente.invertida .cf-imagem { transform: rotate(180deg); }
 .cf-conteudo { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; padding: 14px 12px; }
 .carta-frente.invertida .cf-conteudo, .carta-frente.invertida > svg { transform: rotate(180deg); }
